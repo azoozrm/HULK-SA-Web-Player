@@ -26,7 +26,12 @@ export type BoundProviderRequest = Readonly<{
   pathWithQuery: string;
 }>;
 
-export type ProviderTransportLimits = typeof providerAuthenticationLimits;
+export type ProviderTransportLimits = Readonly<{
+  connectTimeoutMs: number;
+  readTimeoutMs: number;
+  totalTimeoutMs: number;
+  maximumResponseBytes: number;
+}>;
 
 export type BoundProviderRequestExecutor = (
   request: BoundProviderRequest,

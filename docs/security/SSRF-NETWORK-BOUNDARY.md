@@ -40,4 +40,14 @@ Deterministic tests cover prohibited IPv4/IPv6 ranges, alternate IPv4 forms, IPv
 
 Phase 2 validates all resolved Provider addresses but currently selects one approved candidate and does not retry the remaining already-approved candidates. This is a compatibility/reachability risk when the selected address is unavailable. Any future failover must remain bounded to the previously approved candidate set and must not restore hostname re-resolution inside the connector.
 
-Infrastructure-level egress filtering is still required where the eventual host supports it and is not claimed as provisioned by this source phase. Future catalog or media Provider networking must reuse or extend this same enforced boundary and must not create an independent connector.
+## Phase 3 catalog runtime status
+
+Phase 3 extends the same enforced boundary to Live, Movie/VOD, and Series catalog operations. Catalog feature code cannot provide an arbitrary upstream URL, action, path, or query string. A closed server-owned operation union maps only to the required Xtream `player_api.php` catalog actions, and browser-provided category/item identifiers are validated before they are inserted through `URLSearchParams`.
+
+Every catalog operation calls the shared Provider destination approval and then uses the same validated-IP request executor as authentication. The exact approved address and family are handed to the socket lookup callback, the original Host authority is retained, HTTPS SNI/certificate validation uses the original hostname, TLS verification remains enabled, and redirects remain disabled. There is no second hostname resolution inside the connector.
+
+Catalog response limits are operation-specific: category responses are bounded to 2 MiB, listing responses to 16 MiB, and detail responses to 4 MiB. Connect, read, and total request timers remain bounded. Exceeding a response limit fails the HULK catalog request; raw upstream bodies and credential-bearing internal URLs are not returned to the browser.
+
+Catalog data normalization is separate from network approval. Provider-supplied image/metadata URLs are treated as untrusted data and are not fetched by the Phase 3 server; unsafe or credential-bearing metadata URLs normalize to absence rather than creating a generic image proxy.
+
+Infrastructure-level egress filtering is still required where the eventual host supports it and is not claimed as provisioned by this source phase. Future media Provider networking must reuse or extend this same enforced boundary and must not create an independent connector.

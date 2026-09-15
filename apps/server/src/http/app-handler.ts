@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { fileURLToPath } from 'node:url';
+import type { CatalogReader } from '../provider/xtream-catalog.js';
+import { createCatalogApiHandler } from './catalog-api.js';
 import type { SessionApiDependencies } from './session-api.js';
 import { createSessionApiHandler } from './session-api.js';
 
@@ -16,17 +18,27 @@ const staticFiles = new Map<string, Readonly<{ relativePath: string; contentType
   ],
 ]);
 
+export type AppHandlerDependencies = SessionApiDependencies & Readonly<{
+  catalog: CatalogReader;
+}>;
+
 function staticSecurityHeaders(response: ServerResponse): void {
   response.setHeader('X-Content-Type-Options', 'nosniff');
   response.setHeader('Referrer-Policy', 'no-referrer');
   response.setHeader('Content-Security-Policy', "default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
 }
 
-export function createAppHandler(dependencies: SessionApiDependencies) {
+export function createAppHandler(dependencies: AppHandlerDependencies) {
   const sessionApi = createSessionApiHandler(dependencies);
+  const catalogApi = createCatalogApiHandler({
+    sessions: dependencies.sessions,
+    catalog: dependencies.catalog,
+    cookieName: dependencies.config.cookieName,
+  });
   return async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
     try {
       if (await sessionApi(request, response)) return;
+      if (await catalogApi(request, response)) return;
       if (request.method !== 'GET' && request.method !== 'HEAD') {
         response.statusCode = 404;
         response.end();

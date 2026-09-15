@@ -24,6 +24,92 @@ export type ProviderCapabilities = Readonly<{
   series: boolean;
 }>;
 
+export type CatalogCategory = Readonly<{
+  id: string;
+  name: string;
+}>;
+
+export type LiveChannel = Readonly<{
+  id: string;
+  name: string;
+  categoryId: string | null;
+  imageUrl: string | null;
+  epgChannelId: string | null;
+}>;
+
+export type MovieSummary = Readonly<{
+  id: string;
+  name: string;
+  categoryId: string | null;
+  posterUrl: string | null;
+  year: number | null;
+  rating: number | null;
+  containerExtension: string | null;
+}>;
+
+export type MovieDetails = Readonly<{
+  id: string;
+  name: string | null;
+  categoryId: string | null;
+  posterUrl: string | null;
+  year: number | null;
+  rating: number | null;
+  containerExtension: string | null;
+  plot: string | null;
+  durationSeconds: number | null;
+  cast: string | null;
+  director: string | null;
+  genre: string | null;
+  releasedAt: string | null;
+}>;
+
+export type SeriesSummary = Readonly<{
+  id: string;
+  name: string;
+  categoryId: string | null;
+  posterUrl: string | null;
+  year: number | null;
+  rating: number | null;
+  plot: string | null;
+}>;
+
+export type SeriesEpisode = Readonly<{
+  id: string;
+  seriesId: string;
+  seasonKey: string;
+  episodeNumber: number | null;
+  name: string | null;
+  durationSeconds: number | null;
+  containerExtension: string | null;
+  imageUrl: string | null;
+}>;
+
+export type SeriesSeason = Readonly<{
+  seasonKey: string;
+  seasonNumber: number | null;
+  name: string | null;
+  episodes: readonly SeriesEpisode[];
+}>;
+
+export type SeriesDetails = Readonly<{
+  id: string;
+  name: string | null;
+  categoryId: string | null;
+  posterUrl: string | null;
+  year: number | null;
+  rating: number | null;
+  plot: string | null;
+  cast: string | null;
+  director: string | null;
+  genre: string | null;
+  releasedAt: string | null;
+  seasons: readonly SeriesSeason[];
+}>;
+
+export type CatalogCollection<T> = Readonly<{
+  items: readonly T[];
+}>;
+
 export type MediaDeliveryMode =
   | 'gateway-hls-pass-through'
   | 'gateway-mp4-range-pass-through'
