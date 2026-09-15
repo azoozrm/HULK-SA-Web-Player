@@ -4,8 +4,17 @@ const browserPersistencePatterns = [
   /\bindexedDB\b/u,
 ];
 
+const browserSessionExposurePatterns = [
+  /\bdocument\.cookie\b/u,
+  /[?&](?:username|password)=/iu,
+];
+
 export function browserCredentialPersistenceViolations(source) {
   return browserPersistencePatterns.filter((pattern) => pattern.test(source)).map(String);
+}
+
+export function browserSessionExposureViolations(source) {
+  return browserSessionExposurePatterns.filter((pattern) => pattern.test(source)).map(String);
 }
 
 export function nonEmptySecretExampleViolations(source) {

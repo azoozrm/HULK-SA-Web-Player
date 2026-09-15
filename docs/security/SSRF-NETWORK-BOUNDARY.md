@@ -1,6 +1,6 @@
 # Provider Host SSRF / Network Boundary
 
-The Provider Host / Portal URL is user-controlled input. Every future server-side Provider request must pass one enforced connection boundary before any network connection is created.
+The Provider Host / Portal URL is user-controlled input. Every server-side Provider request must pass one enforced connection boundary before any network connection is created.
 
 ## Required validation
 
@@ -13,9 +13,11 @@ The boundary must:
 - reject link-local destinations;
 - reject multicast and reserved/special destinations that are not valid public Provider endpoints;
 - reject cloud instance-metadata destinations, including IPv4 and IPv6 forms;
-- parse and validate IPv4 and IPv6 correctly, including normalized/alternate textual forms;
+- parse and validate IPv4 and IPv6 correctly, including normalized/alternate textual forms and IPv4-mapped IPv6;
 - resolve DNS through a rebinding-resistant flow;
+- fail closed when any resolved candidate is prohibited or when resolution is empty/invalid;
 - ensure the socket/TLS connection is made to the exact validated destination rather than performing an independent second resolution;
+- preserve the original HTTP authority and HTTPS certificate hostname/SNI while binding the socket to the approved IP;
 - disable redirects by default, or re-run the complete validation and connection-binding process on every hop;
 - enforce bounded connection timeout, bounded read timeout, bounded total request time, and bounded response size;
 - restrict outbound methods to those explicitly required by the Provider contract;
@@ -28,8 +30,12 @@ A weak `validate hostname -> later connect by hostname again` model is prohibite
 
 ## Connection ownership
 
-The component that approves the resolved destination must own or cryptographically/structurally bind the destination used by the actual connector. Redirect handling cannot escape that ownership boundary.
+The component that approves the resolved destination owns the destination used by the actual connector. Feature code receives no generic open-proxy surface and cannot bypass destination approval.
 
-## Phase 1 status
+## Phase 2 runtime status
 
-This document freezes the production requirement only. Phase 1 contains no real Provider network connector and therefore does not claim SSRF runtime enforcement as implemented or tested.
+Phase 2 runtime-enforces this boundary for the Xtream authentication operation. The implementation normalizes the user URL, resolves all address candidates, rejects the request if any candidate is prohibited, selects an approved public address, and supplies that exact address to Node's connection lookup callback. For HTTPS the original hostname remains the certificate verification/SNI identity; TLS verification is never disabled. Node's native HTTP client does not follow redirects automatically, so Phase 2 authentication redirects remain disabled.
+
+Deterministic tests cover prohibited IPv4/IPv6 ranges, alternate IPv4 forms, IPv4-mapped IPv6, mixed DNS answers, empty/failed DNS, exact address handoff, hostname/SNI preservation, bounded size/time policy, and redirect refusal. CI additionally qualifies the production Redis-backed session/rate-limit adapter; it does not require a real Provider account.
+
+Infrastructure-level egress filtering is still required where the eventual host supports it and is not claimed as provisioned by this source phase. Future catalog or media Provider networking must reuse or extend this same enforced boundary and must not create an independent connector.

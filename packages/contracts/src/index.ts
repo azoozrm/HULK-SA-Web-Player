@@ -9,6 +9,12 @@ export type OpaqueSessionDescriptor = Readonly<{
   expiresAt: string;
 }>;
 
+export type UnauthenticatedSessionDescriptor = Readonly<{
+  authenticated: false;
+}>;
+
+export type BrowserSessionState = OpaqueSessionDescriptor | UnauthenticatedSessionDescriptor;
+
 export type EpgCapability = 'supported' | 'unsupported' | 'unknown';
 
 export type ProviderCapabilities = Readonly<{
