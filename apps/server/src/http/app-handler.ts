@@ -10,6 +10,10 @@ const staticFiles = new Map<string, Readonly<{ relativePath: string; contentType
   ['/index.html', { relativePath: 'index.html', contentType: 'text/html; charset=utf-8' }],
   ['/styles.css', { relativePath: 'styles.css', contentType: 'text/css; charset=utf-8' }],
   ['/src/main.js', { relativePath: 'src/main.js', contentType: 'text/javascript; charset=utf-8' }],
+  [
+    '/src/session-client.js',
+    { relativePath: 'src/session-client.js', contentType: 'text/javascript; charset=utf-8' },
+  ],
 ]);
 
 function staticSecurityHeaders(response: ServerResponse): void {

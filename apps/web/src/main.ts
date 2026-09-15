@@ -1,4 +1,5 @@
 import type { BrowserSessionState, OpaqueSessionDescriptor } from '../../../packages/contracts/src/index.js';
+import { requestLogout } from './session-client.js';
 
 const queriedRoot = document.querySelector<HTMLElement>('#app');
 if (!queriedRoot) throw new Error('HULK SA Web Player root element is missing.');
@@ -7,7 +8,12 @@ const root: HTMLElement = queriedRoot;
 type ViewState =
   | Readonly<{ kind: 'loading' }>
   | Readonly<{ kind: 'signed-out'; error: string | null }>
-  | Readonly<{ kind: 'signed-in'; session: OpaqueSessionDescriptor; busy: boolean }>;
+  | Readonly<{
+      kind: 'signed-in';
+      session: OpaqueSessionDescriptor;
+      busy: boolean;
+      error: string | null;
+    }>;
 
 let viewState: ViewState = Object.freeze({ kind: 'loading' });
 
@@ -120,7 +126,7 @@ function renderSignedOut(error: string | null): void {
       if (!session.authenticated) throw new Error('Unexpected unauthenticated response.');
       host.value = '';
       username.value = '';
-      viewState = Object.freeze({ kind: 'signed-in', session, busy: false });
+      viewState = Object.freeze({ kind: 'signed-in', session, busy: false, error: null });
       render();
     } catch {
       feedback.textContent = 'تعذر الاتصال بخدمة تسجيل الدخول.';
@@ -135,7 +141,11 @@ function renderSignedOut(error: string | null): void {
   host.focus();
 }
 
-function renderSignedIn(session: OpaqueSessionDescriptor, busy: boolean): void {
+function renderSignedIn(
+  session: OpaqueSessionDescriptor,
+  busy: boolean,
+  error: string | null,
+): void {
   const card = document.createElement('section');
   card.className = 'foundation-card';
   card.setAttribute('aria-labelledby', 'session-title');
@@ -146,24 +156,42 @@ function renderSignedIn(session: OpaqueSessionDescriptor, busy: boolean): void {
   status.textContent = `الجلسة فعالة حتى ${new Date(session.expiresAt).toLocaleString('ar-SA')}.`;
   const logout = button(busy ? 'جارٍ تسجيل الخروج…' : 'تسجيل الخروج');
   logout.disabled = busy;
+  const feedback = document.createElement('p');
+  feedback.className = 'form-feedback';
+  feedback.setAttribute('role', 'status');
+  if (error) feedback.textContent = error;
+
   logout.addEventListener('click', async () => {
-    viewState = Object.freeze({ kind: 'signed-in', session, busy: true });
+    viewState = Object.freeze({ kind: 'signed-in', session, busy: true, error: null });
     render();
     try {
-      await fetch('/api/session', { method: 'DELETE', credentials: 'same-origin' });
-    } finally {
-      viewState = Object.freeze({ kind: 'signed-out', error: null });
-      render();
+      const revoked = await requestLogout(fetch);
+      viewState = revoked
+        ? Object.freeze({ kind: 'signed-out', error: null })
+        : Object.freeze({
+            kind: 'signed-in',
+            session,
+            busy: false,
+            error: 'تعذر تأكيد تسجيل الخروج. قد تظل الجلسة فعالة؛ حاول مرة أخرى.',
+          });
+    } catch {
+      viewState = Object.freeze({
+        kind: 'signed-in',
+        session,
+        busy: false,
+        error: 'تعذر تأكيد تسجيل الخروج. قد تظل الجلسة فعالة؛ حاول مرة أخرى.',
+      });
     }
+    render();
   });
-  card.append(title, status, logout);
+  card.append(title, status, logout, feedback);
   root.replaceChildren(card);
 }
 
 function render(): void {
   if (viewState.kind === 'loading') renderLoading();
   else if (viewState.kind === 'signed-out') renderSignedOut(viewState.error);
-  else renderSignedIn(viewState.session, viewState.busy);
+  else renderSignedIn(viewState.session, viewState.busy, viewState.error);
 }
 
 async function hydrateSession(): Promise<void> {
@@ -177,7 +205,7 @@ async function hydrateSession(): Promise<void> {
     }
     const session = (await response.json()) as BrowserSessionState;
     viewState = session.authenticated
-      ? Object.freeze({ kind: 'signed-in', session, busy: false })
+      ? Object.freeze({ kind: 'signed-in', session, busy: false, error: null })
       : Object.freeze({ kind: 'signed-out', error: null });
   } catch {
     viewState = Object.freeze({ kind: 'signed-out', error: 'تعذر التحقق من الجلسة.' });

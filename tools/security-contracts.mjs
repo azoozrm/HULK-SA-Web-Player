@@ -57,6 +57,8 @@ const networkTransport = await readUtf8(
 for (const term of [
   'connectAddress',
   'lookup:',
+  'family: request.family',
+  'autoSelectFamily: false',
   'tlsServername',
   'connectTimeoutMs',
   'readTimeoutMs',
@@ -64,6 +66,19 @@ for (const term of [
   'maximumResponseBytes',
 ]) {
   if (!networkTransport.includes(term)) failures.push(`Provider transport missing ${term}`);
+}
+
+const loginRateLimiter = await readUtf8(
+  resolve(root, 'apps/server/src/session/login-rate-limiter.ts'),
+);
+if (!loginRateLimiter.includes('normalizeProviderUrl(providerHost).toString()')) {
+  failures.push('Login rate limiter must canonicalize Provider URLs with the shared normalizer');
+}
+if (!loginRateLimiter.includes('username.trim()')) {
+  failures.push('Login rate limiter must use the trimmed username in the account identity');
+}
+if (/username\.trim\(\)\.toLowerCase\(\)/u.test(loginRateLimiter)) {
+  failures.push('Login rate limiter must preserve username case without an authoritative case-insensitive contract');
 }
 
 const sessionApi = await readUtf8(resolve(root, 'apps/server/src/http/session-api.ts'));

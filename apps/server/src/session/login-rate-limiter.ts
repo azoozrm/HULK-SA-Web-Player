@@ -1,10 +1,19 @@
 import { keyedFingerprint } from '../crypto/credential-envelope.js';
+import { normalizeProviderUrl } from '../security/provider-url.js';
 import type { SessionBackend } from './session-backend.js';
 
 export type LoginRateLimitResult = Readonly<{
   allowed: boolean;
   retryAfterSeconds: number;
 }>;
+
+function canonicalProviderAccountIdentity(providerHost: string): string {
+  try {
+    return normalizeProviderUrl(providerHost).toString();
+  } catch {
+    return 'invalid-provider-url';
+  }
+}
 
 export class LoginRateLimiter {
   constructor(
@@ -20,8 +29,9 @@ export class LoginRateLimiter {
     username: string,
   ): Promise<LoginRateLimitResult> {
     const clientKey = keyedFingerprint(`client\0${clientIdentity}`, this.fingerprintKey);
+    const canonicalProviderUrl = canonicalProviderAccountIdentity(providerHost);
     const accountKey = keyedFingerprint(
-      `account\0${providerHost.trim().toLowerCase()}\0${username.trim().toLowerCase()}`,
+      `account\0${canonicalProviderUrl}\0${username.trim()}`,
       this.fingerprintKey,
     );
     const decision = await this.backend.consumeLoginAttempt(
