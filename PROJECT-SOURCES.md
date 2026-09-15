@@ -90,7 +90,7 @@ Security is fail-closed at Provider, session, network, catalog, and media bounda
 
 Authentication/session and authenticated catalog HTTP responses use `no-store`. Provider/upstream failures are mapped to HULK-owned browser errors without raw upstream bodies, credential-bearing URLs, internal address details, Redis details, or stack traces.
 
-Catalog normalization does not intentionally copy active Provider credentials into HULK metadata. Provider-derived string metadata containing the active username/password is rejected or omitted, and Provider-supplied metadata URLs are subject to the additional URL safety policy below.
+Catalog normalization never copies raw Provider credential fields into HULK contracts. General catalog identifiers and text are taken only from explicit allow-listed Provider fields; a value is treated as a direct credential echo only when its normalized scalar value exactly equals the active Provider username or password. Incidental substring overlap is not credential evidence and must not invalidate legitimate IDs, names, or season keys. Provider-supplied metadata URLs remain stricter and are subject to the URL safety policy below.
 
 ## SSRF / Network Contract
 
@@ -128,13 +128,13 @@ Provider response bodies are fully bounded before JSON parsing. Current maxima a
 
 Provider logos, posters, episode images, and similar URLs are untrusted metadata. Phase 3 does not fetch or proxy these resources.
 
-A metadata URL may be represented only when it is HTTP/HTTPS and does not contain URL userinfo, the active Provider username/password, or known credential-like query parameter names such as username/password/token/auth/session/secret/signature/API-key forms. Unsafe values normalize to absence/`null`.
+A metadata URL may be represented only when it is HTTP/HTTPS and does not contain URL userinfo, any occurrence of the active Provider username/password, or known credential-like query parameter names such as username/password/token/auth/session/secret/signature/API-key forms. Unsafe values normalize to absence/`null`. This URL policy is intentionally stricter than normalization of ordinary catalog IDs/text because a reusable credential embedded anywhere in a URL can become an active access primitive.
 
 No generic image proxy is implemented.
 
 ## Capability Discovery
 
-The existing `ProviderCapabilities` contract remains the browser-facing capability shape. For Live/Movies/Series, a successful structurally valid category-operation response is support evidence, including a valid empty array. Empty catalog data therefore does not imply unsupported content.
+The existing `ProviderCapabilities` contract remains the browser-facing capability shape. For Live/Movies/Series, a successful category operation is support evidence only after the payload passes the same category normalizer used by the corresponding category endpoint. A valid empty array is supported. A mixed array is supported when at least one category is usable under the documented list policy. A non-empty array with zero usable categories, or a non-array successful payload, is a malformed Provider response and must not become `supported: true`.
 
 Explicit operation-level rejection using 400/404/405 is treated as unsupported for that catalog family. Provider timeout, DNS/network failure, oversized response, malformed response, or authentication rejection remains an error and is not converted into unsupported capability.
 

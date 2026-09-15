@@ -135,7 +135,7 @@ test('categories, live channels, and movie summaries normalize Provider variatio
 
   assert.throws(
     () => normalizeLiveChannels(
-      [{ stream_id: '5', name: `Unsafe ${credentials.password}`, category_id: '1' }],
+      [{ stream_id: '5', name: credentials.password, category_id: '1' }],
       credentials,
     ),
     CatalogNormalizationError,
@@ -145,6 +145,81 @@ test('categories, live channels, and movie summaries normalize Provider variatio
     () => normalizeLiveChannels([{ stream_id: null, name: null }], credentials),
     CatalogNormalizationError,
   );
+});
+
+test('short credentials do not destroy unrelated catalog values that only overlap incidentally', () => {
+  const shortCredentials = Object.freeze({
+    host: 'https://provider.example/portal/',
+    username: '1',
+    password: 'x',
+  });
+
+  assert.deepEqual(
+    normalizeCatalogCategories(
+      [{ category_id: '10', category_name: 'News 1', username: '1', password: 'x' }],
+      shortCredentials,
+    ),
+    [{ id: '10', name: 'News 1' }],
+  );
+
+  const live = normalizeLiveChannels(
+    [
+      {
+        stream_id: '101',
+        name: 'Channel 1 Extra',
+        category_id: '10',
+        username: '1',
+        password: 'x',
+        raw_provider_field: 'must stay server-side',
+      },
+    ],
+    shortCredentials,
+  );
+  assert.equal(live[0].id, '101');
+  assert.equal(live[0].name, 'Channel 1 Extra');
+  assert.equal(live[0].categoryId, '10');
+  const serializedLive = JSON.stringify(live);
+  assert.equal(serializedLive.includes('username'), false);
+  assert.equal(serializedLive.includes('password'), false);
+  assert.equal(serializedLive.includes('raw_provider_field'), false);
+
+  const movies = normalizeMovieSummaries(
+    [{ stream_id: '210', name: 'Movie x Edition', category_id: '10' }],
+    shortCredentials,
+  );
+  assert.equal(movies[0].name, 'Movie x Edition');
+  assert.equal(movies[0].categoryId, '10');
+
+  const series = normalizeSeriesSummaries(
+    [{ series_id: '310', name: 'Series 1 x', category_id: '10' }],
+    shortCredentials,
+  );
+  assert.equal(series[0].name, 'Series 1 x');
+
+  const details = normalizeSeriesDetails(
+    {
+      info: { name: 'Series 1 x' },
+      seasons: [],
+      episodes: {
+        '10': [{ id: 'e10', title: 'Episode 1 x', info: {} }],
+      },
+    },
+    '310',
+    shortCredentials,
+  );
+  assert.deepEqual(details.seasons.map((season) => season.seasonKey), ['10']);
+  assert.equal(details.seasons[0].episodes[0].name, 'Episode 1 x');
+
+  assert.equal(
+    normalizeMetadataUrl('https://images.example/library/1/poster.jpg', shortCredentials),
+    null,
+  );
+  assert.equal(
+    normalizeMetadataUrl('https://images.example/poster.jpg?token=x', shortCredentials),
+    null,
+  );
+  assert.equal(normalizeMetadataUrl('https://user:pass@images.example/a.jpg', shortCredentials), null);
+  assert.equal(normalizeMetadataUrl('https://images.example/a.jpg?session=value', shortCredentials), null);
 });
 
 test('movie details tolerate incomplete optional metadata but reject completely invalid detail payloads', () => {
@@ -373,19 +448,80 @@ test('catalog service maps bounded transport failures, authentication rejection,
   );
 });
 
-test('capability discovery treats valid empty arrays as supported, explicit operation rejection as unsupported, and network failure as error', async () => {
-  const service = new XtreamCatalogService({
+test('capability discovery requires structurally usable category evidence', async () => {
+  const structurallySupported = new XtreamCatalogService({
+    async request(_credentials, operation) {
+      if (operation.kind === 'live-categories') return { status: 200, body: jsonBytes([]) };
+      if (operation.kind === 'movie-categories') {
+        return {
+          status: 200,
+          body: jsonBytes([{ category_id: '10', category_name: 'Movies' }]),
+        };
+      }
+      return {
+        status: 200,
+        body: jsonBytes([
+          { category_id: '20', category_name: 'Series' },
+          { unexpected: true },
+        ]),
+      };
+    },
+  });
+  assert.deepEqual(await structurallySupported.capabilities(credentials), {
+    epg: 'unknown',
+    live: true,
+    movies: true,
+    series: true,
+  });
+
+  const explicitlyUnsupported = new XtreamCatalogService({
     async request(_credentials, operation) {
       if (operation.kind === 'movie-categories') return { status: 404, body: jsonBytes({}) };
       return { status: 200, body: jsonBytes([]) };
     },
   });
-  assert.deepEqual(await service.capabilities(credentials), {
+  assert.deepEqual(await explicitlyUnsupported.capabilities(credentials), {
     epg: 'unknown',
     live: true,
     movies: false,
     series: true,
   });
+
+  const unusableArray = new XtreamCatalogService({
+    async request(_credentials, operation) {
+      if (operation.kind === 'live-categories') {
+        return { status: 200, body: jsonBytes([{ unexpected: true }]) };
+      }
+      return { status: 200, body: jsonBytes([]) };
+    },
+  });
+  await assert.rejects(
+    unusableArray.capabilities(credentials),
+    (error) => error instanceof CatalogProviderError && error.code === 'malformed_response',
+  );
+
+  const nonArray = new XtreamCatalogService({
+    async request(_credentials, operation) {
+      if (operation.kind === 'live-categories') {
+        return { status: 200, body: jsonBytes({ category_id: '1', category_name: 'Live' }) };
+      }
+      return { status: 200, body: jsonBytes([]) };
+    },
+  });
+  await assert.rejects(
+    nonArray.capabilities(credentials),
+    (error) => error instanceof CatalogProviderError && error.code === 'malformed_response',
+  );
+
+  const authRejected = new XtreamCatalogService({
+    async request() {
+      return { status: 200, body: jsonBytes({ user_info: { auth: 0 } }) };
+    },
+  });
+  await assert.rejects(
+    authRejected.capabilities(credentials),
+    (error) => error instanceof CatalogProviderError && error.code === 'provider_rejected',
+  );
 
   const unavailable = new XtreamCatalogService({
     async request() {

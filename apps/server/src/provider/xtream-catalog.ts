@@ -242,7 +242,7 @@ export class XtreamCatalogService implements CatalogReader {
         if (providerRejectedAuthentication(payload)) {
           throw new CatalogProviderError('provider_rejected');
         }
-        if (!Array.isArray(payload)) throw new CatalogProviderError('malformed_response');
+        this.normalize(() => normalizeCatalogCategories(payload, credentials));
         return true;
       }
       if (response.status === 400 || response.status === 404 || response.status === 405) return false;

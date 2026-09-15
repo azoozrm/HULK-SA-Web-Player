@@ -38,6 +38,15 @@ function boundedString(value: unknown, maximumLength: number): string | null {
   return normalized;
 }
 
+function isDirectProviderCredentialEcho(
+  value: string,
+  credentials: ServerHeldProviderCredentials,
+): boolean {
+  return [credentials.username, credentials.password].some(
+    (credential) => credential.length > 0 && value === credential,
+  );
+}
+
 function containsProviderCredential(
   value: string,
   credentials: ServerHeldProviderCredentials,
@@ -53,7 +62,7 @@ function providerString(
   credentials: ServerHeldProviderCredentials,
 ): string | null {
   const normalized = boundedString(value, maximumLength);
-  return normalized && !containsProviderCredential(normalized, credentials) ? normalized : null;
+  return normalized && !isDirectProviderCredentialEcho(normalized, credentials) ? normalized : null;
 }
 
 function firstProviderString(
@@ -85,7 +94,7 @@ function normalizeProviderIdentifier(
   credentials: ServerHeldProviderCredentials,
 ): string | null {
   const normalized = normalizeCatalogIdentifier(value);
-  return normalized && !containsProviderCredential(normalized, credentials) ? normalized : null;
+  return normalized && !isDirectProviderCredentialEcho(normalized, credentials) ? normalized : null;
 }
 
 export function parseBrowserCatalogIdentifier(value: string): string | null {
@@ -349,7 +358,7 @@ function normalizeSeasonKey(
     !key ||
     key.length > 64 ||
     CONTROL_CHARACTER.test(key) ||
-    containsProviderCredential(key, credentials)
+    isDirectProviderCredentialEcho(key, credentials)
   ) {
     return null;
   }
