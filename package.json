@@ -11,13 +11,19 @@
     "format:check": "node tools/format.mjs --check",
     "lint": "node tools/lint.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test tests/*.test.mjs",
+    "build:test": "npm run clean && tsc -p tsconfig.build.json",
+    "test": "npm run build:test && node --test tests/*.test.mjs",
     "build": "npm run clean && tsc -p tsconfig.build.json && node tools/copy-static.mjs",
+    "start": "node dist/apps/server/src/start.js",
     "security:contracts": "node tools/security-contracts.mjs",
     "audit": "npm audit --audit-level=high",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build && npm run security:contracts"
   },
+  "dependencies": {
+    "@redis/client": "6.2.1"
+  },
   "devDependencies": {
+    "@types/node": "24.13.4",
     "typescript": "6.0.3"
   }
 }
