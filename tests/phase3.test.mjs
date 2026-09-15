@@ -133,12 +133,20 @@ test('categories, live channels, and movie summaries normalize Provider variatio
     },
   ]);
 
-  assert.throws(
-    () => normalizeLiveChannels(
+  assert.deepEqual(
+    normalizeLiveChannels(
       [{ stream_id: '5', name: credentials.password, category_id: '1' }],
       credentials,
     ),
-    CatalogNormalizationError,
+    [
+      {
+        id: '5',
+        name: credentials.password,
+        categoryId: '1',
+        imageUrl: null,
+        epgChannelId: null,
+      },
+    ],
   );
   assert.throws(() => normalizeCatalogCategories({}, credentials), CatalogNormalizationError);
   assert.throws(
