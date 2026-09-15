@@ -58,7 +58,6 @@ for (const term of [
   'connectAddress',
   'lookup:',
   'family: request.family',
-  'autoSelectFamily: false',
   'tlsServername',
   'connectTimeoutMs',
   'readTimeoutMs',

@@ -73,7 +73,6 @@ function buildRequestOptions(request: BoundProviderRequest): HttpsRequestOptions
     },
     agent: false,
     family: request.family,
-    autoSelectFamily: false,
     lookup: (_hostname, lookupOptions, callback) => {
       if (lookupOptions.all) {
         callback(null, [{ address: request.connectAddress, family: request.family }]);
