@@ -58,7 +58,7 @@ The browser is an untrusted client. Provider credentials and Provider-origin net
 
 ## Provider Contract
 
-The Provider Host is user supplied. Xtream capabilities may vary by Provider and must be discovered/normalized instead of assumed. The representative Phase 0 Provider proved authentication, Live categories/streams, VOD categories/streams/info, Series categories/listing/info/episodes, Live HLS, Safari-compatible MP4 VOD/Series playback, and HTTP Range/seek for tested MP4 media. Representative Provider-specific values are qualification evidence only and are not production configuration.
+The Provider Host is user supplied. Xtream capabilities may vary by Provider and must be discovered/normalized instead of assumed. The representative Phase 0 Provider proved authentication, Live categories/streams, VOD categories/streams/info, Series categories/listing/info/episodes, Live HLS, Safari-compatible MP4 VOD/Series playback, and successful forward/backward seeking on the tested MP4 media. HTTP Range / 206 semantics were not directly tested. Representative Provider-specific values are qualification evidence only and are not production configuration.
 
 ## Authentication / Session Direction
 
