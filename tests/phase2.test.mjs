@@ -107,8 +107,10 @@ test('credential envelope uses authenticated encryption and rejects tampering', 
     credentials,
   );
 
-  const replacement = envelope.ciphertext.endsWith('A') ? 'B' : 'A';
-  const tampered = { ...envelope, ciphertext: `${envelope.ciphertext.slice(0, -1)}${replacement}` };
+  const tamperedCiphertext = Buffer.from(envelope.ciphertext, 'base64url');
+  assert.ok(tamperedCiphertext.length > 0);
+  tamperedCiphertext[0] ^= 0x01;
+  const tampered = { ...envelope, ciphertext: tamperedCiphertext.toString('base64url') };
   assert.throws(
     () => decryptProviderCredentials(tampered, keys.credentialEncryptionKey),
     CredentialEnvelopeError,
