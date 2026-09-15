@@ -33,7 +33,7 @@ if (
   runtimeDependencies[0]?.[0] !== '@redis/client' ||
   runtimeDependencies[0]?.[1] !== '6.2.1'
 ) {
-  failures.push('package.json: Phase 2 runtime dependency must be exactly @redis/client@6.2.1');
+  failures.push('package.json: runtime dependency must remain exactly @redis/client@6.2.1');
 }
 
 const serverFiles = await walkFiles(resolve(root, 'apps/server'));
@@ -67,6 +67,44 @@ for (const term of [
   if (!networkTransport.includes(term)) failures.push(`Provider transport missing ${term}`);
 }
 
+const catalogTransport = await readUtf8(
+  resolve(root, 'apps/server/src/network/provider-catalog-transport.ts'),
+);
+for (const term of [
+  'approveProviderDestination',
+  'executeBoundProviderRequest',
+  'connectAddress',
+  'tlsServername',
+  'get_live_categories',
+  'get_live_streams',
+  'get_vod_categories',
+  'get_vod_streams',
+  'get_vod_info',
+  'get_series_categories',
+  'get_series',
+  'get_series_info',
+]) {
+  if (!catalogTransport.includes(term)) failures.push(`Catalog Provider transport missing ${term}`);
+}
+if (/operation\.(?:action|path|url|query)/u.test(catalogTransport)) {
+  failures.push('Catalog Provider transport must not accept arbitrary upstream action/path/url/query values');
+}
+
+const catalogApi = await readUtf8(resolve(root, 'apps/server/src/http/catalog-api.ts'));
+for (const term of ['acquireProviderCredentials', 'Cache-Control', 'no-store', 'INVALID_REQUEST']) {
+  if (!catalogApi.includes(term)) failures.push(`Catalog API missing ${term}`);
+}
+if (/localStorage|sessionStorage|indexedDB/iu.test(catalogApi)) {
+  failures.push('Catalog API must not persist browser credentials or sessions');
+}
+
+const catalogNormalizer = await readUtf8(
+  resolve(root, 'apps/server/src/catalog/catalog-normalizer.ts'),
+);
+for (const term of ['SENSITIVE_QUERY_NAME', 'url.username', 'url.password', 'root.episodes']) {
+  if (!catalogNormalizer.includes(term)) failures.push(`Catalog normalizer missing ${term}`);
+}
+
 const loginRateLimiter = await readUtf8(
   resolve(root, 'apps/server/src/session/login-rate-limiter.ts'),
 );
@@ -93,8 +131,8 @@ for (const term of ['aes-256-gcm', 'hkdfSync', 'randomBytes', 'setAAD']) {
 }
 
 const ssrfDocument = await readUtf8(resolve(root, 'docs/security/SSRF-NETWORK-BOUNDARY.md'));
-if (!ssrfDocument.includes('Phase 2 runtime status')) {
-  failures.push('SSRF contract must record the Phase 2 runtime enforcement status');
+for (const term of ['Phase 2 runtime status', 'Phase 3 catalog runtime status']) {
+  if (!ssrfDocument.includes(term)) failures.push(`SSRF contract must record ${term}`);
 }
 
 if (failures.length) {

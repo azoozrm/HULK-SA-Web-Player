@@ -3,8 +3,10 @@ import { deriveSecurityKeys } from './crypto/credential-envelope.js';
 import { loadRuntimeConfig } from './config.js';
 import { createAppHandler } from './http/app-handler.js';
 import { NodeProviderAuthenticationTransport } from './network/provider-authentication-transport.js';
+import { NodeProviderCatalogTransport } from './network/provider-catalog-transport.js';
 import { SystemProviderDnsResolver } from './network/system-dns-resolver.js';
 import { XtreamProviderAuthenticator } from './provider/xtream-authenticator.js';
+import { XtreamCatalogService } from './provider/xtream-catalog.js';
 import { LoginRateLimiter } from './session/login-rate-limiter.js';
 import { createRedisSessionBackend, MemorySessionBackend } from './session/session-backend.js';
 import { SessionManager } from './session/session-manager.js';
@@ -14,8 +16,11 @@ const securityKeys = deriveSecurityKeys(config.sessionRootKey);
 const backend = config.sessionStore === 'redis'
   ? await createRedisSessionBackend(config.redisUrl ?? '')
   : new MemorySessionBackend();
-const transport = new NodeProviderAuthenticationTransport(new SystemProviderDnsResolver());
-const authenticator = new XtreamProviderAuthenticator(transport);
+const resolver = new SystemProviderDnsResolver();
+const authenticationTransport = new NodeProviderAuthenticationTransport(resolver);
+const catalogTransport = new NodeProviderCatalogTransport(resolver);
+const authenticator = new XtreamProviderAuthenticator(authenticationTransport);
+const catalog = new XtreamCatalogService(catalogTransport);
 const sessions = new SessionManager(
   backend,
   securityKeys.credentialEncryptionKey,
@@ -29,6 +34,7 @@ const rateLimiter = new LoginRateLimiter(
 );
 const handler = createAppHandler({
   authenticator,
+  catalog,
   sessions,
   rateLimiter,
   config: {
