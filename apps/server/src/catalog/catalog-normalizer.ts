@@ -38,15 +38,6 @@ function boundedString(value: unknown, maximumLength: number): string | null {
   return normalized;
 }
 
-function isDirectProviderCredentialEcho(
-  value: string,
-  credentials: ServerHeldProviderCredentials,
-): boolean {
-  return [credentials.username, credentials.password].some(
-    (credential) => credential.length > 0 && value === credential,
-  );
-}
-
 function containsProviderCredential(
   value: string,
   credentials: ServerHeldProviderCredentials,
@@ -59,10 +50,11 @@ function containsProviderCredential(
 function providerString(
   value: unknown,
   maximumLength: number,
-  credentials: ServerHeldProviderCredentials,
+  _credentials: ServerHeldProviderCredentials,
 ): string | null {
-  const normalized = boundedString(value, maximumLength);
-  return normalized && !isDirectProviderCredentialEcho(normalized, credentials) ? normalized : null;
+  // Ordinary catalog scalar safety comes from explicit field selection by the caller.
+  // Do not infer credential leakage from coincidental scalar value content.
+  return boundedString(value, maximumLength);
 }
 
 function firstProviderString(
@@ -91,10 +83,9 @@ export function normalizeCatalogIdentifier(value: unknown): string | null {
 
 function normalizeProviderIdentifier(
   value: unknown,
-  credentials: ServerHeldProviderCredentials,
+  _credentials: ServerHeldProviderCredentials,
 ): string | null {
-  const normalized = normalizeCatalogIdentifier(value);
-  return normalized && !isDirectProviderCredentialEcho(normalized, credentials) ? normalized : null;
+  return normalizeCatalogIdentifier(value);
 }
 
 export function parseBrowserCatalogIdentifier(value: string): string | null {
@@ -350,16 +341,11 @@ function seasonMetadata(
 
 function normalizeSeasonKey(
   value: unknown,
-  credentials: ServerHeldProviderCredentials,
+  _credentials: ServerHeldProviderCredentials,
 ): string | null {
   if (typeof value !== 'string' && typeof value !== 'number') return null;
   const key = String(value).trim();
-  if (
-    !key ||
-    key.length > 64 ||
-    CONTROL_CHARACTER.test(key) ||
-    isDirectProviderCredentialEcho(key, credentials)
-  ) {
+  if (!key || key.length > 64 || CONTROL_CHARACTER.test(key)) {
     return null;
   }
   return key;
