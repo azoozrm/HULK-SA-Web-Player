@@ -202,13 +202,17 @@ function registerLoginStage(stage: HTMLElement): void {
   syncLoginComposition();
 }
 
+function normalizeShellArabicCopy(value: string): string {
+  return value.replace(/[أإآ]/gu, 'ا').replace(/[\u064B-\u065F\u0670]/gu, '');
+}
+
 function formatSessionExpiry(expiresAt: string): string {
   const date = new Date(expiresAt);
-  if (Number.isNaN(date.getTime())) return 'الجلسة فعالة';
-  return new Intl.DateTimeFormat('ar-SA', {
+  if (Number.isNaN(date.getTime())) return 'الجلسه فعاله';
+  return normalizeShellArabicCopy(new Intl.DateTimeFormat('ar-SA', {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(date);
+  }).format(date));
 }
 
 function renderLoading(): void {
@@ -517,7 +521,7 @@ function createNavigation(place: 'sidebar' | 'bottom'): HTMLElement {
 
     const icon = createIcon(DESTINATION_ICONS[destination.id]);
     const text = document.createElement('span');
-    text.textContent = destination.label;
+    text.textContent = normalizeShellArabicCopy(destination.label);
     item.append(icon, text);
     item.addEventListener('click', () => {
       if (destination.id === activeDestination) return;
@@ -548,7 +552,7 @@ async function performLogout(
         kind: 'signed-in',
         session,
         busy: false,
-        error: 'تعذر تأكيد تسجيل الخروج. قد تظل الجلسة فعالة؛ حاول مرة أخرى.',
+        error: 'تعذر تاكيد تسجيل الخروج وقد تظل الجلسه فعاله حاول مره اخرى',
       });
     }
   } catch {
@@ -556,7 +560,7 @@ async function performLogout(
       kind: 'signed-in',
       session,
       busy: false,
-      error: 'تعذر تأكيد تسجيل الخروج. قد تظل الجلسة فعالة؛ حاول مرة أخرى.',
+      error: 'تعذر تاكيد تسجيل الخروج وقد تظل الجلسه فعاله حاول مره اخرى',
     });
   }
   render();
@@ -568,14 +572,14 @@ function createLogoutButton(
   compact: boolean,
 ): HTMLButtonElement {
   const button = createButton(
-    busy ? 'جارٍ تسجيل الخروج…' : 'تسجيل الخروج',
+    busy ? 'جاري تسجيل الخروج' : 'تسجيل الخروج',
     compact ? 'shell-logout shell-logout-compact' : 'shell-logout',
   );
   button.prepend(createIcon('logout'));
   button.disabled = busy;
   if (compact) {
-    button.setAttribute('aria-label', busy ? 'جارٍ تسجيل الخروج' : 'تسجيل الخروج');
-    button.title = busy ? 'جارٍ تسجيل الخروج' : 'تسجيل الخروج';
+    button.setAttribute('aria-label', busy ? 'جاري تسجيل الخروج' : 'تسجيل الخروج');
+    button.title = busy ? 'جاري تسجيل الخروج' : 'تسجيل الخروج';
   }
   button.addEventListener('click', () => {
     void performLogout(session);
@@ -598,12 +602,9 @@ function renderDestinationContent(error: string | null): HTMLElement {
   eyebrow.className = 'shell-eyebrow';
   eyebrow.textContent = 'HULK SA WEB PLAYER';
   const title = document.createElement('h1');
-  title.textContent = destination.label;
+  title.textContent = normalizeShellArabicCopy(destination.label);
   titleGroup.append(eyebrow, title);
-  const secureStatus = document.createElement('span');
-  secureStatus.className = 'secure-session-chip';
-  secureStatus.textContent = 'جلسة آمنة';
-  header.append(titleGroup, secureStatus);
+  header.append(titleGroup);
 
   if (error) {
     const notice = document.createElement('p');
@@ -624,11 +625,13 @@ function renderDestinationContent(error: string | null): HTMLElement {
   iconWrap.append(createIcon(DESTINATION_ICONS[destination.id]));
   const stageTitle = document.createElement('h2');
   stageTitle.id = 'shell-stage-title';
-  stageTitle.textContent = destination.id === 'home' ? 'مرحباً بك في HULK SA' : destination.label;
+  stageTitle.textContent = destination.id === 'home'
+    ? 'مرحبا بك في HULK SA'
+    : normalizeShellArabicCopy(destination.label);
   const copy = document.createElement('p');
   copy.textContent = destination.id === 'home'
-    ? 'اختر وجهتك من شريط التنقل للوصول إلى أقسام المشغل.'
-    : 'لا توجد بيانات مزود معروضة في هذه الواجهة حالياً.';
+    ? 'اختر وجهتك من شريط التنقل للوصول الى اقسام المشغل'
+    : 'لا توجد بيانات مزود معروضه في هذه الواجهه حاليا';
   stage.append(iconWrap, stageTitle, copy);
   content.append(stage);
   return content;
@@ -654,7 +657,7 @@ function renderSignedIn(
   sidebarFooter.className = 'shell-sidebar-footer';
   const expiry = document.createElement('p');
   expiry.className = 'session-expiry';
-  expiry.textContent = `تنتهي الجلسة ${formatSessionExpiry(session.expiresAt)}`;
+  expiry.textContent = `تنتهي الجلسه ${formatSessionExpiry(session.expiresAt)}`;
   sidebarFooter.append(expiry, createLogoutButton(session, busy, false));
   sidebar.append(brand, sidebarNav, sidebarFooter);
 

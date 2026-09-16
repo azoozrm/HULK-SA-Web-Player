@@ -44,7 +44,7 @@ textarea {
 }
 
 .brand-badge {
-  inline-size: clamp(5.4rem, 22vw, 7.2rem);
+  inline-size: clamp(6.1rem, 24vw, 7.8rem);
   box-shadow:
     0 1rem 2.7rem rgb(0 0 0 / 46%),
     0 0 1.6rem rgb(188 148 43 / 8%);
@@ -153,9 +153,9 @@ textarea {
   justify-content: flex-start;
   gap: 0.5rem;
   padding: 0.38rem 0.46rem;
-  border: 1px solid transparent;
+  border: 1px solid rgb(207 166 56 / 10%);
   border-radius: 0.72rem;
-  background: transparent;
+  background: rgb(207 166 56 / 2%);
   color: rgb(205 199 183 / 88%);
   cursor: pointer;
   font-size: 0.79rem;
@@ -168,9 +168,17 @@ textarea {
 }
 
 .login-option-toggle:hover {
-  border-color: rgb(207 166 56 / 12%);
-  background: rgb(207 166 56 / 4%);
-  color: var(--hulk-text);
+  border-color: rgb(207 166 56 / 10%);
+  background: rgb(207 166 56 / 2%);
+  color: rgb(205 199 183 / 88%);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .login-option-toggle:hover {
+    border-color: rgb(207 166 56 / 18%);
+    background: rgb(207 166 56 / 5%);
+    color: var(--hulk-text);
+  }
 }
 
 .login-option-input {
@@ -273,9 +281,19 @@ textarea {
     inset 0 -1px rgb(81 56 10 / 30%);
 }
 
+.shell-mobile-badge {
+  inline-size: 3.15rem;
+  block-size: 3.15rem;
+  flex: 0 0 auto;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 0;
+  filter: drop-shadow(0 0.5rem 1rem rgb(0 0 0 / 36%));
+}
+
 @media (max-width: 24rem) {
   .brand-badge {
-    inline-size: 5.25rem;
+    inline-size: 5.7rem;
   }
 
   .login-panel {
