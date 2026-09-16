@@ -7,6 +7,11 @@ export type ShellDestination = Readonly<{
   label: string;
 }>;
 
+type ViewportMeasurements = Readonly<{
+  width: number;
+  height: number;
+}>;
+
 export const SHELL_DESTINATIONS: readonly ShellDestination[] = Object.freeze([
   Object.freeze({ id: 'home', label: 'الرئيسية' }),
   Object.freeze({ id: 'live', label: 'البث المباشر' }),
@@ -23,8 +28,46 @@ export function resolveAppPath(basePath: string, path: string): string {
   return `${basePath}${path}`;
 }
 
-export function resolveLoginComposition(widthPx: number, heightPx: number): LoginComposition {
-  if (!Number.isFinite(widthPx) || !Number.isFinite(heightPx) || widthPx <= 0 || heightPx <= 0) {
+function isUsableViewportMeasurement(value: number): boolean {
+  return Number.isFinite(value) && value > 0;
+}
+
+function currentVisualViewportMeasurements(): ViewportMeasurements | null {
+  if (typeof window === 'undefined' || !window.visualViewport) return null;
+  return Object.freeze({
+    width: window.visualViewport.width,
+    height: window.visualViewport.height,
+  });
+}
+
+function resolveVisibleViewportMeasurements(
+  layoutWidthPx: number,
+  layoutHeightPx: number,
+  visualViewport: ViewportMeasurements | null,
+): ViewportMeasurements {
+  if (
+    visualViewport &&
+    isUsableViewportMeasurement(visualViewport.width) &&
+    isUsableViewportMeasurement(visualViewport.height)
+  ) {
+    return visualViewport;
+  }
+
+  return Object.freeze({ width: layoutWidthPx, height: layoutHeightPx });
+}
+
+export function resolveLoginComposition(
+  layoutWidthPx: number,
+  layoutHeightPx: number,
+  visualViewport: ViewportMeasurements | null = currentVisualViewportMeasurements(),
+): LoginComposition {
+  const { width: widthPx, height: heightPx } = resolveVisibleViewportMeasurements(
+    layoutWidthPx,
+    layoutHeightPx,
+    visualViewport,
+  );
+
+  if (!isUsableViewportMeasurement(widthPx) || !isUsableViewportMeasurement(heightPx)) {
     return 'centered';
   }
 

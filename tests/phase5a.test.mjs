@@ -17,6 +17,18 @@ test('Phase 5A adaptive login policy stays centered on phones and splits only on
   assert.equal(resolveLoginComposition(1920, 1080), 'split');
 });
 
+test('Phase 5A adaptive login policy prefers a valid Visual Viewport and falls back safely', () => {
+  assert.equal(
+    resolveLoginComposition(1280, 720, { width: 1280, height: 390 }),
+    'centered',
+    'software keyboard height reduction must leave split composition',
+  );
+  assert.equal(resolveLoginComposition(1280, 720, null), 'split');
+  assert.equal(resolveLoginComposition(1280, 720, { width: 0, height: 390 }), 'split');
+  assert.equal(resolveLoginComposition(1280, 720, { width: 1280, height: Number.NaN }), 'split');
+  assert.equal(resolveLoginComposition(1280, 720, { width: Number.POSITIVE_INFINITY, height: 390 }), 'split');
+});
+
 test('Phase 5A browser-owned URLs remain base-path safe', () => {
   assert.equal(resolveAppPath('', '/api/session'), '/api/session');
   assert.equal(resolveAppPath('/player', '/api/session'), '/player/api/session');
@@ -75,14 +87,21 @@ test('Phase 5A visual source carries HULK tokens, safe areas, focus and reduced-
   assert.match(styles, /@media \(min-width:\s*56rem\)/u);
 });
 
-test('Phase 5A login and shell keep keyboard and D-pad style navigation explicit', async () => {
-  const source = await readFile(new URL('../apps/web/src/main.ts', import.meta.url), 'utf8');
+test('Phase 5A login and shell keep keyboard, D-pad and viewport resize navigation explicit', async () => {
+  const [mainSource, uiModelSource] = await Promise.all([
+    readFile(new URL('../apps/web/src/main.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../apps/web/src/ui-model.ts', import.meta.url), 'utf8'),
+  ]);
   for (const key of ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight']) {
-    assert.match(source, new RegExp(key, 'u'));
+    assert.match(mainSource, new RegExp(key, 'u'));
   }
-  assert.match(source, /aria-current/u);
-  assert.match(source, /aria-label', 'التنقل الرئيسي'/u);
-  assert.match(source, /reportValidity/u);
+  assert.match(mainSource, /aria-current/u);
+  assert.match(mainSource, /aria-label', 'التنقل الرئيسي'/u);
+  assert.match(mainSource, /reportValidity/u);
+  assert.match(mainSource, /window\.addEventListener\('resize', syncLoginComposition/u);
+  assert.match(mainSource, /window\.visualViewport\?\.addEventListener\('resize', syncLoginComposition/u);
+  assert.match(uiModelSource, /window\.visualViewport\.width/u);
+  assert.match(uiModelSource, /window\.visualViewport\.height/u);
 });
 
 test('Phase 5A brand assets are local SVGs copied and served by the Web runtime', async () => {
