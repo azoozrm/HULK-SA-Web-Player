@@ -3,6 +3,10 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import type { CatalogReader } from '../provider/xtream-catalog.js';
 import { createCatalogApiHandler } from './catalog-api.js';
+import {
+  createMediaApiHandler,
+  type MediaApiRuntimeDependencies,
+} from './media-api.js';
 import type { SessionApiDependencies } from './session-api.js';
 import { createSessionApiHandler } from './session-api.js';
 
@@ -20,6 +24,7 @@ const staticFiles = new Map<string, Readonly<{ relativePath: string; contentType
 
 export type AppHandlerDependencies = SessionApiDependencies & Readonly<{
   catalog: CatalogReader;
+  media: MediaApiRuntimeDependencies;
 }>;
 
 function staticSecurityHeaders(response: ServerResponse): void {
@@ -35,10 +40,20 @@ export function createAppHandler(dependencies: AppHandlerDependencies) {
     catalog: dependencies.catalog,
     cookieName: dependencies.config.cookieName,
   });
+  const mediaApi = createMediaApiHandler({
+    sessions: dependencies.sessions,
+    catalog: dependencies.catalog,
+    cookieName: dependencies.config.cookieName,
+    publicOrigin: dependencies.config.publicOrigin,
+    transport: dependencies.media.transport,
+    locator: dependencies.media.locator,
+    adapter: dependencies.media.adapter,
+  });
   return async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
     try {
       if (await sessionApi(request, response)) return;
       if (await catalogApi(request, response)) return;
+      if (await mediaApi(request, response)) return;
       if (request.method !== 'GET' && request.method !== 'HEAD') {
         response.statusCode = 404;
         response.end();
