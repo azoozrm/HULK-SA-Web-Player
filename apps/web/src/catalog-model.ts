@@ -45,6 +45,21 @@ export const CATALOG_COPY = Object.freeze({
 
 export const CATALOG_RENDER_BATCH_SIZE = 60;
 
+const DISPLAY_MONTHS = Object.freeze([
+  'يناير',
+  'فبراير',
+  'مارس',
+  'ابريل',
+  'مايو',
+  'يونيو',
+  'يوليو',
+  'اغسطس',
+  'سبتمبر',
+  'اكتوبر',
+  'نوفمبر',
+  'ديسمبر',
+]);
+
 export function initialCatalogRenderCount(total: number): number {
   if (!Number.isInteger(total) || total < 0) throw new Error('Catalog item count is invalid.');
   return Math.min(total, CATALOG_RENDER_BATCH_SIZE);
@@ -84,6 +99,32 @@ export function formatDuration(seconds: number | null): string | null {
   return `${minutes} د`;
 }
 
+export function formatDisplayDate(value: string | null): string | null {
+  if (value === null) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/u.exec(trimmed);
+  if (!match) return trimmed;
+  const yearText = match[1];
+  const monthText = match[2];
+  const dayText = match[3];
+  if (!yearText || !monthText || !dayText) return trimmed;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const monthName = DISPLAY_MONTHS[month - 1];
+  if (!monthName) return trimmed;
+  const validation = new Date(Date.UTC(year, month - 1, day));
+  if (
+    validation.getUTCFullYear() !== year ||
+    validation.getUTCMonth() !== month - 1 ||
+    validation.getUTCDate() !== day
+  ) {
+    return trimmed;
+  }
+  return `${day} ${monthName} ${year}`;
+}
+
 export type DetailMetadata = Readonly<{
   label: string;
   value: string;
@@ -106,7 +147,7 @@ export function movieDetailsMetadata(details: MovieDetails): readonly DetailMeta
   pushMetadata(rows, CATALOG_COPY.genre, details.genre);
   pushMetadata(rows, CATALOG_COPY.cast, details.cast);
   pushMetadata(rows, CATALOG_COPY.director, details.director);
-  pushMetadata(rows, CATALOG_COPY.release, details.releasedAt);
+  pushMetadata(rows, CATALOG_COPY.release, formatDisplayDate(details.releasedAt));
   return Object.freeze(rows);
 }
 
@@ -117,7 +158,7 @@ export function seriesDetailsMetadata(details: SeriesDetails): readonly DetailMe
   pushMetadata(rows, CATALOG_COPY.genre, details.genre);
   pushMetadata(rows, CATALOG_COPY.cast, details.cast);
   pushMetadata(rows, CATALOG_COPY.director, details.director);
-  pushMetadata(rows, CATALOG_COPY.release, details.releasedAt);
+  pushMetadata(rows, CATALOG_COPY.release, formatDisplayDate(details.releasedAt));
   return Object.freeze(rows);
 }
 

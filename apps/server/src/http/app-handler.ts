@@ -29,6 +29,10 @@ const staticFiles = new Map<string, Readonly<{ relativePath: string; contentType
     { relativePath: 'login-polish.css', contentType: 'text/css; charset=utf-8' },
   ],
   ['/catalog.css', { relativePath: 'catalog.css', contentType: 'text/css; charset=utf-8' }],
+  [
+    '/catalog-polish.css',
+    { relativePath: 'catalog-polish.css', contentType: 'text/css; charset=utf-8' },
+  ],
   ['/src/main.js', { relativePath: 'src/main.js', contentType: 'text/javascript; charset=utf-8' }],
   [
     '/src/catalog-app.js',

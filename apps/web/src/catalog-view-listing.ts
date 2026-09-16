@@ -11,13 +11,14 @@ function categories<T>(
   action: (id: string | null) => void,
 ): HTMLElement {
   const region = document.createElement('section');
-  region.className = 'catalog-category-region';
+  region.className = `catalog-category-region catalog-category-region-${family}`;
   region.setAttribute('aria-label', CATALOG_COPY.categories);
   const strip = document.createElement('div');
   strip.className = 'catalog-category-strip';
   const entries = [{ id: null, name: allCategoryLabel(family) }, ...state.categories];
   for (const entry of entries) {
     const control = viewButton(entry.name, 'catalog-category-button');
+    control.prepend(viewIcon(family));
     if (entry.id === state.selectedCategoryId) {
       control.classList.add('is-active');
       control.setAttribute('aria-current', 'true');
@@ -166,6 +167,7 @@ export function renderHome(
     if (destination.id === 'home') continue;
     const supported = isCatalogFamilySupported(capabilities.value, destination.id);
     const card = viewButton('', 'catalog-home-card');
+    card.classList.add(`catalog-home-card-${destination.id}`);
     card.disabled = !supported;
     const mark = document.createElement('span');
     mark.className = 'catalog-home-icon';
