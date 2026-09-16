@@ -15,7 +15,7 @@ export const providerNetworkPolicy = Object.freeze({
   boundedReadTimeout: true,
   boundedTotalRequestTime: true,
   boundedResponseSize: true,
-  restrictedMethods: ['GET'] as const,
+  restrictedMethods: ['GET', 'HEAD'] as const,
   infrastructureEgressControlWhereAvailable: true,
   redactSensitiveUrlsAndLogs: true,
 });
@@ -46,6 +46,13 @@ export const providerCatalogLimits = Object.freeze({
     totalTimeoutMs: 15_000,
     maximumResponseBytes: 4 * 1024 * 1024,
   }),
+});
+
+export const providerMediaLimits = Object.freeze({
+  connectTimeoutMs: 5_000,
+  readTimeoutMs: 20_000,
+  maximumStreamDurationMs: 8 * 60 * 60 * 1000,
+  maximumStreamBytes: 64 * 1024 * 1024 * 1024,
 });
 
 export type ProviderNetworkPolicy = typeof providerNetworkPolicy;

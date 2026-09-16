@@ -2,8 +2,11 @@ import { createServer } from 'node:http';
 import { deriveSecurityKeys } from './crypto/credential-envelope.js';
 import { loadRuntimeConfig } from './config.js';
 import { createAppHandler } from './http/app-handler.js';
+import { MediaLocatorCodec } from './media/media-locator.js';
+import { NodeFfmpegMediaAdapter } from './media/remux.js';
 import { NodeProviderAuthenticationTransport } from './network/provider-authentication-transport.js';
 import { NodeProviderCatalogTransport } from './network/provider-catalog-transport.js';
+import { NodeProviderMediaTransport } from './network/provider-media-transport.js';
 import { SystemProviderDnsResolver } from './network/system-dns-resolver.js';
 import { XtreamProviderAuthenticator } from './provider/xtream-authenticator.js';
 import { XtreamCatalogService } from './provider/xtream-catalog.js';
@@ -19,6 +22,7 @@ const backend = config.sessionStore === 'redis'
 const resolver = new SystemProviderDnsResolver();
 const authenticationTransport = new NodeProviderAuthenticationTransport(resolver);
 const catalogTransport = new NodeProviderCatalogTransport(resolver);
+const mediaTransport = new NodeProviderMediaTransport(resolver);
 const authenticator = new XtreamProviderAuthenticator(authenticationTransport);
 const catalog = new XtreamCatalogService(catalogTransport);
 const sessions = new SessionManager(
@@ -32,11 +36,18 @@ const rateLimiter = new LoginRateLimiter(
   config.loginAttemptLimit,
   config.loginWindowMs,
 );
+const mediaLocator = new MediaLocatorCodec(securityKeys.mediaLocatorKey);
+const mediaAdapter = new NodeFfmpegMediaAdapter();
 const handler = createAppHandler({
   authenticator,
   catalog,
   sessions,
   rateLimiter,
+  media: {
+    transport: mediaTransport,
+    locator: mediaLocator,
+    adapter: mediaAdapter,
+  },
   config: {
     publicOrigin: config.publicOrigin,
     cookieName: config.cookieName,

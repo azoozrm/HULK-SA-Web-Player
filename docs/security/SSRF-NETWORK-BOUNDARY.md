@@ -51,3 +51,15 @@ Catalog response limits are operation-specific: category responses are bounded t
 Catalog data normalization is separate from network approval. Provider-supplied image/metadata URLs are treated as untrusted data and are not fetched by the Phase 3 server; unsafe or credential-bearing metadata URLs normalize to absence rather than creating a generic image proxy.
 
 Infrastructure-level egress filtering is still required where the eventual host supports it and is not claimed as provisioned by this source phase. Future media Provider networking must reuse or extend this same enforced boundary and must not create an independent connector.
+
+## Phase 4 media runtime status
+
+Phase 4 extends the same destination approval into the media gateway. Initial Xtream media targets are constructed only from the active server-held Provider credential lease plus validated HULK media kind/item identity. The browser cannot supply an upstream URL, hostname, path, query string, or arbitrary outbound header.
+
+HLS manifests may introduce new Provider/CDN HTTP(S) destinations. Those targets are encrypted inside short-lived HULK media locators and are never returned as plaintext Provider/CDN URLs. Every nested target is normalized and re-resolved at request time through the same public-destination rules: all DNS candidates are checked, mixed public/prohibited answers fail closed, the actual socket lookup is pinned to the selected validated address/family, original Host and HTTPS SNI/certificate identity are retained, and TLS verification remains enabled. Redirect responses are rejected and their `Location` value is never exposed to the browser.
+
+Media GET/HEAD connections use bounded connect and idle-read timers, an eight-hour hard connection-duration ceiling, and a 64 GiB hard byte ceiling. HLS manifest buffering is separately capped at 2 MiB; binary HLS/VOD data uses streaming backpressure. Provider `Set-Cookie`, `Location`, and arbitrary response headers are not forwarded. Only explicitly validated media response metadata is allowed across the HULK boundary.
+
+The media connector does not perform a hostname validation followed by an unconstrained second lookup. Any future redirect-following or multi-address failover must re-run or remain inside the same approved destination set rather than delegating name resolution to the HTTP client.
+
+Infrastructure-level egress enforcement remains a deployment responsibility and is not claimed as provisioned by Phase 4 source.

@@ -126,12 +126,103 @@ for (const term of ['HttpOnly', 'SameSite=Strict', 'Cache-Control', 'no-store', 
 const credentialCrypto = await readUtf8(
   resolve(root, 'apps/server/src/crypto/credential-envelope.ts'),
 );
-for (const term of ['aes-256-gcm', 'hkdfSync', 'randomBytes', 'setAAD']) {
+for (const term of [
+  'aes-256-gcm',
+  'hkdfSync',
+  'randomBytes',
+  'setAAD',
+  'MEDIA_LOCATOR_INFO',
+  'mediaLocatorKey',
+]) {
   if (!credentialCrypto.includes(term)) failures.push(`Credential protection missing ${term}`);
 }
 
+const mediaLocator = await readUtf8(resolve(root, 'apps/server/src/media/media-locator.ts'));
+for (const term of ['createCipheriv', 'createDecipheriv', 'timingSafeEqual', 'expiresAtEpochMs', 'sessionOwner']) {
+  if (!mediaLocator.includes(term)) failures.push(`Media locator boundary missing ${term}`);
+}
+
+const mediaTransport = await readUtf8(
+  resolve(root, 'apps/server/src/network/provider-media-transport.ts'),
+);
+for (const term of [
+  'approveProviderRequestUrl',
+  'connectAddress',
+  'lookup:',
+  'family: approved.family',
+  'servername',
+  'redirect_rejected',
+  'maximumStreamDurationMs',
+  'maximumStreamBytes',
+  'filterProviderMediaResponseHeaders',
+]) {
+  if (!mediaTransport.includes(term)) failures.push(`Media Provider transport missing ${term}`);
+}
+if (/['"](?:set-cookie|location)['"]\s*:/iu.test(mediaTransport)) {
+  failures.push('Media Provider transport must not forward Provider Set-Cookie or Location headers');
+}
+
+const mediaApi = await readUtf8(resolve(root, 'apps/server/src/http/media-api.ts'));
+for (const term of [
+  'acquireProviderCredentials',
+  'locator.open',
+  'createMediaSessionGuard',
+  'MEDIA_SESSION_REVALIDATION_MS',
+  'parseSingleByteRange',
+  'Content-Range',
+  'Cache-Control',
+  'no-store',
+  'SESSION_UNAVAILABLE',
+]) {
+  if (!mediaApi.includes(term)) failures.push(`Media API missing ${term}`);
+}
+if (/localStorage|sessionStorage|indexedDB/iu.test(mediaApi)) {
+  failures.push('Media API must not persist browser credentials or locators');
+}
+
+const hlsRewriter = await readUtf8(resolve(root, 'apps/server/src/media/hls-rewriter.ts'));
+for (const term of [
+  '#EXT-X-KEY',
+  '#EXT-X-MAP',
+  '#EXT-X-MEDIA',
+  '#EXT-X-I-FRAME-STREAM-INF',
+  '#EXT-X-SESSION-KEY',
+  '#EXT-X-SESSION-DATA',
+  '#EXT-X-PART',
+  '#EXT-X-PRELOAD-HINT',
+  '#EXT-X-RENDITION-REPORT',
+  'MAXIMUM_HLS_MANIFEST_BYTES',
+  'assertNoUpstreamUri',
+]) {
+  if (!hlsRewriter.includes(term)) failures.push(`HLS rewrite boundary missing ${term}`);
+}
+if (/forbiddenSubstrings|credentials\.(?:username|password)/u.test(hlsRewriter)) {
+  failures.push('HLS rewriting must use URI-field ownership, not credential substring coincidence checks');
+}
+
+const remux = await readUtf8(resolve(root, 'apps/server/src/media/remux.ts'));
+for (const term of [
+  'spawn(',
+  'shell: false',
+  "'-protocol_whitelist'",
+  "'pipe:0'",
+  "'pipe:1'",
+  'MAXIMUM_PROBE_INPUT_BYTES',
+  'BoundedProcessPool',
+  'selectRemuxPath',
+  'guardStdin',
+]) {
+  if (!remux.includes(term)) failures.push(`Remux process boundary missing ${term}`);
+}
+if (/\bexec(?:File)?\s*\(/u.test(remux)) {
+  failures.push('Remux process boundary must use spawn without shell execution');
+}
+if (/env:\s*process\.env/u.test(remux)) {
+  failures.push('Remux child processes must not inherit the complete server environment');
+}
+
 const ssrfDocument = await readUtf8(resolve(root, 'docs/security/SSRF-NETWORK-BOUNDARY.md'));
-for (const term of ['Phase 2 runtime status', 'Phase 3 catalog runtime status']) {
+for (const term of ['Phase 2 runtime status', 'Phase 3 catalog runtime status', 'Phase 4 media runtime status']) {
   if (!ssrfDocument.includes(term)) failures.push(`SSRF contract must record ${term}`);
 }
 

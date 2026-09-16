@@ -116,6 +116,16 @@ export type MediaDeliveryMode =
   | 'gateway-remux'
   | 'gateway-selective-transcode';
 
+export type MediaLocatorRequest =
+  | Readonly<{ kind: 'live'; id: string }>
+  | Readonly<{ kind: 'movie'; id: string }>
+  | Readonly<{ kind: 'episode'; id: string; seriesId: string }>;
+
+export type MediaLocatorDescriptor = Readonly<{
+  url: string;
+  expiresAt: string;
+}>;
+
 export type SeriesEpisodeRef = Readonly<{
   id: string;
   seasonKey: string;

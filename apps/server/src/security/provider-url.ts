@@ -14,6 +14,14 @@ export type ApprovedProviderDestination = Readonly<{
   port: number;
 }>;
 
+export type ApprovedProviderRequestDestination = Readonly<{
+  requestUrl: URL;
+  hostname: string;
+  connectAddress: string;
+  family: IpFamily;
+  port: number;
+}>;
+
 export interface ProviderDnsResolver {
   resolve(hostname: string): Promise<readonly ResolvedProviderAddress[]>;
 }
@@ -42,9 +50,9 @@ function isLocalhostName(hostname: string): boolean {
   return hostname === 'localhost' || hostname.endsWith('.localhost');
 }
 
-export function normalizeProviderUrl(input: string): URL {
-  const candidate = input.trim();
-  if (!candidate || candidate.length > 2048) {
+function normalizeHttpUrl(input: string | URL, allowQuery: boolean, maximumLength: number): URL {
+  const candidate = typeof input === 'string' ? input.trim() : input.toString();
+  if (!candidate || candidate.length > maximumLength) {
     throw new ProviderNetworkPolicyError('invalid_provider_url');
   }
 
@@ -58,7 +66,7 @@ export function normalizeProviderUrl(input: string): URL {
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new ProviderNetworkPolicyError('invalid_provider_url');
   }
-  if (url.username || url.password || url.search || url.hash) {
+  if (url.username || url.password || url.hash || (!allowQuery && url.search)) {
     throw new ProviderNetworkPolicyError('invalid_provider_url');
   }
 
@@ -69,19 +77,14 @@ export function normalizeProviderUrl(input: string): URL {
 
   const normalized = new URL(url.toString());
   normalized.hostname = hostname.includes(':') ? `[${hostname}]` : hostname;
-  const pathname = /\/player_api\.php$/iu.test(normalized.pathname)
-    ? normalized.pathname.slice(0, -'player_api.php'.length)
-    : normalized.pathname;
-  normalized.pathname = pathname.endsWith('/') ? pathname : `${pathname}/`;
   return normalized;
 }
 
-export async function approveProviderDestination(
-  input: string,
+async function approveNormalizedUrl(
+  url: URL,
   resolver: ProviderDnsResolver,
-): Promise<ApprovedProviderDestination> {
-  const baseUrl = normalizeProviderUrl(input);
-  const hostname = normalizedHostname(baseUrl);
+): Promise<Readonly<{ hostname: string; connectAddress: string; family: IpFamily; port: number }>> {
+  const hostname = normalizedHostname(url);
   let candidates: readonly ResolvedProviderAddress[];
 
   const literal = normalizeIpAddress(hostname);
@@ -113,19 +116,49 @@ export async function approveProviderDestination(
 
   const selected = normalizedCandidates[0];
   if (!selected) throw new ProviderNetworkPolicyError('provider_dns_failed');
-  const explicitPort = baseUrl.port ? Number(baseUrl.port) : null;
-  const port = explicitPort ?? (baseUrl.protocol === 'https:' ? 443 : 80);
+  const explicitPort = url.port ? Number(url.port) : null;
+  const port = explicitPort ?? (url.protocol === 'https:' ? 443 : 80);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new ProviderNetworkPolicyError('invalid_provider_url');
   }
 
   return Object.freeze({
-    baseUrl,
     hostname,
     connectAddress: selected.address,
     family: selected.family,
     port,
   });
+}
+
+export function normalizeProviderUrl(input: string): URL {
+  const normalized = normalizeHttpUrl(input, false, 2048);
+  const pathname = /\/player_api\.php$/iu.test(normalized.pathname)
+    ? normalized.pathname.slice(0, -'player_api.php'.length)
+    : normalized.pathname;
+  normalized.pathname = pathname.endsWith('/') ? pathname : `${pathname}/`;
+  return normalized;
+}
+
+export function normalizeProviderRequestUrl(input: string | URL): URL {
+  return normalizeHttpUrl(input, true, 8192);
+}
+
+export async function approveProviderDestination(
+  input: string,
+  resolver: ProviderDnsResolver,
+): Promise<ApprovedProviderDestination> {
+  const baseUrl = normalizeProviderUrl(input);
+  const approved = await approveNormalizedUrl(baseUrl, resolver);
+  return Object.freeze({ baseUrl, ...approved });
+}
+
+export async function approveProviderRequestUrl(
+  input: string | URL,
+  resolver: ProviderDnsResolver,
+): Promise<ApprovedProviderRequestDestination> {
+  const requestUrl = normalizeProviderRequestUrl(input);
+  const approved = await approveNormalizedUrl(requestUrl, resolver);
+  return Object.freeze({ requestUrl, ...approved });
 }
 
 export function isIpLiteralHostname(hostname: string): boolean {

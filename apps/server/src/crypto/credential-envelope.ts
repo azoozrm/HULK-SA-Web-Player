@@ -13,6 +13,7 @@ const GCM_TAG_BYTES = 16;
 const HKDF_SALT = Buffer.from('hulk-sa-web-player:phase-2:v1', 'utf8');
 const CREDENTIAL_INFO = Buffer.from('provider-credential-envelope:v1', 'utf8');
 const RATE_LIMIT_INFO = Buffer.from('login-rate-limit-fingerprint:v1', 'utf8');
+const MEDIA_LOCATOR_INFO = Buffer.from('media-locator-envelope:v1', 'utf8');
 const CREDENTIAL_AAD = Buffer.from('hulk-provider-credentials:v1', 'utf8');
 
 export type CredentialEnvelopeV1 = Readonly<{
@@ -26,6 +27,7 @@ export type CredentialEnvelopeV1 = Readonly<{
 export type DerivedSecurityKeys = Readonly<{
   credentialEncryptionKey: Buffer;
   rateLimitFingerprintKey: Buffer;
+  mediaLocatorKey: Buffer;
 }>;
 
 export class SecretConfigurationError extends Error {
@@ -66,9 +68,12 @@ export function deriveSecurityKeys(rootSecret: string): DerivedSecurityKeys {
   const rateLimitFingerprintKey = Buffer.from(
     hkdfSync('sha256', root, HKDF_SALT, RATE_LIMIT_INFO, 32),
   );
+  const mediaLocatorKey = Buffer.from(
+    hkdfSync('sha256', root, HKDF_SALT, MEDIA_LOCATOR_INFO, 32),
+  );
   root.fill(0);
 
-  return Object.freeze({ credentialEncryptionKey, rateLimitFingerprintKey });
+  return Object.freeze({ credentialEncryptionKey, rateLimitFingerprintKey, mediaLocatorKey });
 }
 
 export function encryptProviderCredentials(
