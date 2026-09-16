@@ -84,7 +84,7 @@ jobs:
           QUALIFICATION_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          zip_name="HULK-SA-Web-Player-Phase-5A-Rendered-Qualification-${QUALIFICATION_SHA}.zip"
+          zip_name="HULK-SA-Web-Player-Phase-5B-Rendered-Qualification-${QUALIFICATION_SHA}.zip"
           rm -rf qualification
           mkdir -p qualification
           cp -R dist qualification/dist
@@ -103,10 +103,10 @@ jobs:
       - name: Upload rendered qualification overlay
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: phase-5a-rendered-qualification-${{ github.event.pull_request.head.sha }}
+          name: phase-5b-rendered-qualification-${{ github.event.pull_request.head.sha }}
           path: |
-            HULK-SA-Web-Player-Phase-5A-Rendered-Qualification-${{ github.event.pull_request.head.sha }}.zip
-            HULK-SA-Web-Player-Phase-5A-Rendered-Qualification-${{ github.event.pull_request.head.sha }}.zip.sha256
+            HULK-SA-Web-Player-Phase-5B-Rendered-Qualification-${{ github.event.pull_request.head.sha }}.zip
+            HULK-SA-Web-Player-Phase-5B-Rendered-Qualification-${{ github.event.pull_request.head.sha }}.zip.sha256
           if-no-files-found: error
           compression-level: 0
           retention-days: 7

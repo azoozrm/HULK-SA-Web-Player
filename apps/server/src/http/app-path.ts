@@ -34,7 +34,9 @@ export function renderVersionedStaticAssetUrls(
   return source
     .replaceAll(`${basePath}/styles.css`, `${staticBasePath}/styles.css`)
     .replaceAll(`${basePath}/login-polish.css`, `${staticBasePath}/login-polish.css`)
-    .replaceAll(`${basePath}/src/main.js`, `${staticBasePath}/src/main.js`);
+    .replaceAll(`${basePath}/catalog.css`, `${staticBasePath}/catalog.css`)
+    .replaceAll(`${basePath}/src/main.js`, `${staticBasePath}/src/main.js`)
+    .replaceAll(`${basePath}/src/catalog-app.js`, `${staticBasePath}/src/catalog-app.js`);
 }
 
 export function resolveVersionedStaticAssetPath(pathname: string): string {
