@@ -88,6 +88,13 @@ jobs:
           rm -rf qualification
           mkdir -p qualification
           cp -R dist qualification/dist
+          find qualification/dist -type f \
+            \( -name '*.d.ts' -o -name '*.d.ts.map' -o -name '*.js.map' \) -delete
+          if find qualification/dist -type f \
+            \( -name '*.d.ts' -o -name '*.d.ts.map' -o -name '*.js.map' \) | grep -q .; then
+            echo "qualification overlay contains non-runtime build metadata" >&2
+            exit 1
+          fi
           (
             cd qualification
             zip -X -q -r "../${zip_name}" dist
