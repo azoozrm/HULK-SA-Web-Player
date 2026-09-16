@@ -3,8 +3,11 @@ export type LogoutFetch = (
   init: RequestInit,
 ) => Promise<Readonly<{ ok: boolean }>>;
 
-export async function requestLogout(fetcher: LogoutFetch): Promise<boolean> {
-  const response = await fetcher('/api/session', {
+export async function requestLogout(
+  fetcher: LogoutFetch,
+  sessionUrl = '/api/session',
+): Promise<boolean> {
+  const response = await fetcher(sessionUrl, {
     method: 'DELETE',
     credentials: 'same-origin',
   });

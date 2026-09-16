@@ -4,6 +4,12 @@ import { requestLogout } from './session-client.js';
 const queriedRoot = document.querySelector<HTMLElement>('#app');
 if (!queriedRoot) throw new Error('HULK SA Web Player root element is missing.');
 const root: HTMLElement = queriedRoot;
+const appBasePath = document.querySelector<HTMLMetaElement>('meta[name="hulk-app-base-path"]')?.content ?? '';
+
+function appPath(path: string): string {
+  if (!path.startsWith('/')) throw new Error('HULK application path must be absolute.');
+  return appBasePath ? `${appBasePath}${path}` : path;
+}
 
 type ViewState =
   | Readonly<{ kind: 'loading' }>
@@ -110,7 +116,7 @@ function renderSignedOut(error: string | null): void {
     password.value = '';
 
     try {
-      const response = await fetch('/api/session', {
+      const response = await fetch(appPath('/api/session'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
@@ -165,7 +171,7 @@ function renderSignedIn(
     viewState = Object.freeze({ kind: 'signed-in', session, busy: true, error: null });
     render();
     try {
-      const revoked = await requestLogout(fetch);
+      const revoked = await requestLogout(fetch, appPath('/api/session'));
       viewState = revoked
         ? Object.freeze({ kind: 'signed-out', error: null })
         : Object.freeze({
@@ -197,7 +203,7 @@ function render(): void {
 async function hydrateSession(): Promise<void> {
   render();
   try {
-    const response = await fetch('/api/session', { method: 'GET', credentials: 'same-origin' });
+    const response = await fetch(appPath('/api/session'), { method: 'GET', credentials: 'same-origin' });
     if (!response.ok) {
       viewState = Object.freeze({ kind: 'signed-out', error: null });
       render();

@@ -50,6 +50,7 @@ const handler = createAppHandler({
   },
   config: {
     publicOrigin: config.publicOrigin,
+    appBasePath: config.appBasePath,
     cookieName: config.cookieName,
     secureCookie: config.secureCookie,
   },
