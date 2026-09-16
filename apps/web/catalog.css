@@ -1,0 +1,437 @@
+.catalog-stage {
+  max-inline-size: 78rem;
+  margin: clamp(1.1rem, 3vw, 2rem) auto 0;
+}
+
+.catalog-page-body,
+.catalog-home,
+.series-season-region {
+  display: grid;
+  gap: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.catalog-home-intro {
+  margin: 0;
+  color: var(--hulk-text-muted);
+  font-size: clamp(0.95rem, 2vw, 1.05rem);
+  line-height: 1.7;
+}
+
+.catalog-home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 0.9rem;
+}
+
+.catalog-home-card {
+  min-block-size: 8.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--hulk-line);
+  border-radius: var(--hulk-radius-lg);
+  background: linear-gradient(145deg, rgb(27 26 14 / 68%), rgb(8 10 7 / 86%));
+  color: var(--hulk-text);
+  text-align: start;
+  box-shadow: inset 0 1px rgb(255 255 255 / 3%);
+  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+}
+
+.catalog-home-card:not(:disabled):hover,
+.catalog-card:is(button):hover {
+  border-color: var(--hulk-line-strong);
+  transform: translateY(-1px);
+}
+
+.catalog-home-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.catalog-home-icon,
+.catalog-status-icon {
+  inline-size: 3.35rem;
+  block-size: 3.35rem;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--hulk-line);
+  border-radius: 1rem;
+  background: rgb(230 195 82 / 8%);
+  color: var(--hulk-gold-bright);
+}
+
+.catalog-home-copy {
+  min-inline-size: 0;
+  display: grid;
+  gap: 0.28rem;
+}
+
+.catalog-home-copy strong {
+  font-size: 1.05rem;
+}
+
+.catalog-home-copy small {
+  color: var(--hulk-text-muted);
+  font-size: 0.78rem;
+}
+
+.catalog-status {
+  min-block-size: 13rem;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.85rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 1px solid rgb(230 195 82 / 16%);
+  border-radius: var(--hulk-radius-lg);
+  background: linear-gradient(145deg, rgb(27 26 14 / 44%), rgb(8 10 7 / 64%));
+  text-align: center;
+}
+
+.catalog-status p {
+  margin: 0;
+  color: var(--hulk-text-muted);
+  line-height: 1.7;
+}
+
+.catalog-status-error {
+  border-color: rgb(255 116 108 / 30%);
+}
+
+.catalog-category-region {
+  min-inline-size: 0;
+}
+
+.catalog-category-strip,
+.series-season-selector {
+  display: flex;
+  gap: 0.55rem;
+  overflow-x: auto;
+  padding: 0.2rem 0.2rem 0.55rem;
+  scrollbar-width: thin;
+  overscroll-behavior-inline: contain;
+}
+
+.catalog-category-button,
+.catalog-secondary-action,
+.catalog-back-action {
+  min-block-size: 2.75rem;
+  border: 1px solid var(--hulk-line);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 3%);
+  color: var(--hulk-text-muted);
+  font-weight: 700;
+  white-space: nowrap;
+  transition: border-color 140ms ease, color 140ms ease, background-color 140ms ease;
+}
+
+.catalog-category-button {
+  flex: 0 0 auto;
+  padding-inline: 0.9rem;
+}
+
+.catalog-category-button:hover,
+.catalog-secondary-action:hover,
+.catalog-back-action:hover,
+.catalog-category-button.is-active {
+  border-color: var(--hulk-line-strong);
+  background: rgb(230 195 82 / 11%);
+  color: var(--hulk-gold-bright);
+}
+
+.catalog-category-button.is-active {
+  box-shadow: inset 0 -0.12rem var(--hulk-gold);
+}
+
+.catalog-grid {
+  display: grid;
+  gap: clamp(0.75rem, 2vw, 1.1rem);
+}
+
+.catalog-grid-live {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+}
+
+.catalog-grid-posters {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+}
+
+.catalog-card {
+  min-inline-size: 0;
+  overflow: hidden;
+  border: 1px solid rgb(230 195 82 / 14%);
+  border-radius: var(--hulk-radius-md);
+  background: linear-gradient(155deg, rgb(20 20 11 / 78%), rgb(7 8 5 / 92%));
+  color: var(--hulk-text);
+  box-shadow: inset 0 1px rgb(255 255 255 / 2%);
+}
+
+button.catalog-card {
+  inline-size: 100%;
+  padding: 0;
+  text-align: start;
+}
+
+.catalog-live-card {
+  display: grid;
+  grid-template-columns: 4.8rem minmax(0, 1fr);
+  align-items: center;
+  min-block-size: 5.2rem;
+}
+
+.catalog-poster-card {
+  display: grid;
+  align-content: start;
+}
+
+.catalog-artwork {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 30%, rgb(230 195 82 / 12%), transparent 68%),
+    #0d0e08;
+  color: rgb(230 195 82 / 56%);
+}
+
+.catalog-artwork img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.catalog-artwork .ui-icon {
+  inline-size: 2.2rem;
+  block-size: 2.2rem;
+}
+
+.catalog-live-card .catalog-artwork {
+  inline-size: 4.8rem;
+  block-size: 4.8rem;
+  border-inline-end: 1px solid rgb(230 195 82 / 12%);
+}
+
+.catalog-poster-card .catalog-artwork {
+  inline-size: 100%;
+  aspect-ratio: 2 / 3;
+  border-block-end: 1px solid rgb(230 195 82 / 12%);
+}
+
+.catalog-card-body {
+  min-inline-size: 0;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.8rem;
+}
+
+.catalog-card-body h2 {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  font-weight: 750;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.catalog-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.catalog-card-meta span {
+  padding: 0.18rem 0.42rem;
+  border-radius: 999px;
+  background: rgb(230 195 82 / 8%);
+  color: var(--hulk-text-muted);
+  font-size: 0.7rem;
+}
+
+.catalog-load-more {
+  display: flex;
+  justify-content: center;
+}
+
+.catalog-secondary-action,
+.catalog-back-action {
+  padding-inline: 1rem;
+}
+
+.catalog-back-action {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.catalog-detail {
+  display: grid;
+  gap: clamp(1rem, 3vw, 2rem);
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid rgb(230 195 82 / 17%);
+  border-radius: var(--hulk-radius-xl);
+  background: linear-gradient(145deg, rgb(27 26 14 / 58%), rgb(8 10 7 / 78%));
+}
+
+.catalog-detail-artwork {
+  inline-size: min(100%, 18rem);
+  aspect-ratio: 2 / 3;
+  justify-self: center;
+  border: 1px solid var(--hulk-line);
+  border-radius: var(--hulk-radius-lg);
+}
+
+.catalog-detail-body {
+  min-inline-size: 0;
+  align-self: center;
+}
+
+.catalog-detail-eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--hulk-gold);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.catalog-detail-body h2 {
+  margin: 0;
+  font-size: clamp(1.55rem, 5vw, 2.5rem);
+  line-height: 1.25;
+}
+
+.catalog-detail-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 1rem 0 0;
+}
+
+.catalog-detail-metadata div {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid rgb(230 195 82 / 13%);
+  border-radius: 0.75rem;
+  background: rgb(0 0 0 / 18%);
+}
+
+.catalog-detail-metadata dt,
+.catalog-detail-metadata dd {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.catalog-detail-metadata dt {
+  color: var(--hulk-text-muted);
+}
+
+.catalog-detail-metadata dd {
+  color: var(--hulk-text);
+}
+
+.catalog-detail-plot {
+  margin: 1rem 0 0;
+  color: var(--hulk-text-muted);
+  line-height: 1.85;
+  white-space: pre-line;
+}
+
+.series-season-region {
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid rgb(230 195 82 / 14%);
+  border-radius: var(--hulk-radius-lg);
+  background: rgb(11 12 7 / 55%);
+}
+
+.series-season-region h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.series-episode-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.series-episode-card {
+  min-inline-size: 0;
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgb(230 195 82 / 12%);
+  border-radius: var(--hulk-radius-md);
+  background: rgb(0 0 0 / 18%);
+}
+
+.series-episode-artwork {
+  inline-size: 6rem;
+  aspect-ratio: 16 / 9;
+  border-inline-end: 1px solid rgb(230 195 82 / 10%);
+}
+
+.series-episode-card > div:last-child {
+  min-inline-size: 0;
+  padding: 0.75rem;
+}
+
+.series-episode-card h4,
+.series-episode-card p {
+  margin: 0;
+}
+
+.series-episode-card h4 {
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.series-episode-card p {
+  margin-block-start: 0.3rem;
+  color: var(--hulk-text-muted);
+  font-size: 0.75rem;
+}
+
+@media (min-width: 40rem) {
+  .catalog-grid-posters {
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  }
+
+  .catalog-detail {
+    grid-template-columns: minmax(11rem, 18rem) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+@media (min-width: 56rem) {
+  .catalog-grid-live {
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  }
+
+  .catalog-grid-posters {
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  }
+
+  .catalog-detail-artwork {
+    justify-self: stretch;
+  }
+}
+
+@media (min-width: 80rem) {
+  .catalog-grid-posters {
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  }
+}
+
+@media (prefers-contrast: more) {
+  .catalog-card,
+  .catalog-detail,
+  .catalog-status,
+  .series-season-region {
+    border-color: var(--hulk-gold);
+  }
+}

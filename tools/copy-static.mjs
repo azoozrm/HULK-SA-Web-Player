@@ -16,6 +16,8 @@ await mkdir(fontOutput, { recursive: true });
 await copyFile(resolve(root, 'apps/web/index.html'), resolve(webOutput, 'index.html'));
 await copyFile(resolve(root, 'apps/web/styles.css'), resolve(webOutput, 'styles.css'));
 await copyFile(resolve(root, 'apps/web/login-polish.css'), resolve(webOutput, 'login-polish.css'));
+await copyFile(resolve(root, 'apps/web/catalog.css'), resolve(webOutput, 'catalog.css'));
+await copyFile(resolve(root, 'apps/web/catalog-polish.css'), resolve(webOutput, 'catalog-polish.css'));
 await copyFile(
   resolve(root, 'apps/web/assets/hulk-sa-badge.svg'),
   resolve(assetOutput, 'hulk-sa-badge.svg'),

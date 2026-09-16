@@ -28,7 +28,36 @@ const staticFiles = new Map<string, Readonly<{ relativePath: string; contentType
     '/login-polish.css',
     { relativePath: 'login-polish.css', contentType: 'text/css; charset=utf-8' },
   ],
+  ['/catalog.css', { relativePath: 'catalog.css', contentType: 'text/css; charset=utf-8' }],
+  [
+    '/catalog-polish.css',
+    { relativePath: 'catalog-polish.css', contentType: 'text/css; charset=utf-8' },
+  ],
   ['/src/main.js', { relativePath: 'src/main.js', contentType: 'text/javascript; charset=utf-8' }],
+  [
+    '/src/catalog-app.js',
+    { relativePath: 'src/catalog-app.js', contentType: 'text/javascript; charset=utf-8' },
+  ],
+  [
+    '/src/catalog-view.js',
+    { relativePath: 'src/catalog-view.js', contentType: 'text/javascript; charset=utf-8' },
+  ],
+  [
+    '/src/catalog-view-details.js',
+    { relativePath: 'src/catalog-view-details.js', contentType: 'text/javascript; charset=utf-8' },
+  ],
+  [
+    '/src/catalog-view-helpers.js',
+    { relativePath: 'src/catalog-view-helpers.js', contentType: 'text/javascript; charset=utf-8' },
+  ],
+  [
+    '/src/catalog-view-listing.js',
+    { relativePath: 'src/catalog-view-listing.js', contentType: 'text/javascript; charset=utf-8' },
+  ],
+  [
+    '/src/catalog-view-state.js',
+    { relativePath: 'src/catalog-view-state.js', contentType: 'text/javascript; charset=utf-8' },
+  ],
   [
     '/src/session-client.js',
     { relativePath: 'src/session-client.js', contentType: 'text/javascript; charset=utf-8' },
@@ -36,6 +65,14 @@ const staticFiles = new Map<string, Readonly<{ relativePath: string; contentType
   [
     '/src/ui-model.js',
     { relativePath: 'src/ui-model.js', contentType: 'text/javascript; charset=utf-8' },
+  ],
+  [
+    '/src/catalog-client.js',
+    { relativePath: 'src/catalog-client.js', contentType: 'text/javascript; charset=utf-8' },
+  ],
+  [
+    '/src/catalog-model.js',
+    { relativePath: 'src/catalog-model.js', contentType: 'text/javascript; charset=utf-8' },
   ],
   [
     '/assets/hulk-sa-badge.svg',
