@@ -6,6 +6,7 @@ export type RuntimeConfig = Readonly<{
   bindHost: string;
   port: number;
   publicOrigin: string;
+  appBasePath: string;
   sessionStore: SessionStoreKind;
   redisUrl: string | null;
   sessionRootKey: string;
@@ -57,6 +58,21 @@ function parseOrigin(value: string | undefined, mode: RuntimeMode, port: number)
     throw new RuntimeConfigurationError('HULK_PUBLIC_ORIGIN must use HTTP or HTTPS.');
   }
   return origin;
+}
+
+function parseAppBasePath(value: string | undefined): string {
+  const candidate = (value ?? '').trim();
+  if (!candidate || candidate === '/') return '';
+  if (!/^\/[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~-]+)*$/u.test(candidate)) {
+    throw new RuntimeConfigurationError(
+      'HULK_APP_BASE_PATH must be empty or an absolute path without a trailing slash.',
+    );
+  }
+  const segments = candidate.slice(1).split('/');
+  if (segments.some((segment) => segment === '.' || segment === '..')) {
+    throw new RuntimeConfigurationError('HULK_APP_BASE_PATH cannot contain dot segments.');
+  }
+  return candidate;
 }
 
 function isLoopbackOrigin(origin: URL): boolean {
@@ -144,6 +160,7 @@ export function loadRuntimeConfig(
     bindHost: environment.HULK_BIND_HOST || '127.0.0.1',
     port,
     publicOrigin: publicOrigin.origin,
+    appBasePath: parseAppBasePath(environment.HULK_APP_BASE_PATH),
     sessionStore: requestedStore,
     redisUrl: validateRedisUrl(environment.HULK_REDIS_URL, requestedStore === 'redis'),
     sessionRootKey,

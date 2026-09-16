@@ -33,6 +33,7 @@ import {
 } from '../network/provider-media-transport.js';
 import { CatalogProviderError, type CatalogReader } from '../provider/xtream-catalog.js';
 import { normalizeProviderUrl } from '../security/provider-url.js';
+import { appExternalPath } from './app-path.js';
 
 const MAXIMUM_MEDIA_LOCATOR_BODY_BYTES = 4 * 1024;
 export const MEDIA_SESSION_REVALIDATION_MS = 15_000;
@@ -48,6 +49,7 @@ export type MediaApiDependencies = MediaApiRuntimeDependencies & Readonly<{
   catalog: CatalogReader;
   cookieName: string;
   publicOrigin: string;
+  appBasePath: string;
 }>;
 
 class MediaRequestValidationError extends Error {}
@@ -358,7 +360,7 @@ async function serveHlsManifest(
         Object.freeze({ kind: 'hls', uri: nestedUrl.toString(), resource }),
         lease.expiresAtEpochMs,
       );
-      return `/api/media/r/${issued.token}`;
+      return appExternalPath(dependencies.appBasePath, `/api/media/r/${issued.token}`);
     },
   );
   setMediaHeaders(response);
@@ -586,7 +588,7 @@ async function handleLocatorIssue(
   const target = await authorizeTarget(locatorRequest, dependencies.catalog, lease.credentials);
   const issued = dependencies.locator.issue(sessionToken, target, lease.expiresAtEpochMs);
   const descriptor: MediaLocatorDescriptor = Object.freeze({
-    url: `/api/media/r/${issued.token}`,
+    url: appExternalPath(dependencies.appBasePath, `/api/media/r/${issued.token}`),
     expiresAt: new Date(issued.expiresAtEpochMs).toISOString(),
   });
   writeJson(response, 201, descriptor);

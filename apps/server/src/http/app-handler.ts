@@ -4,6 +4,11 @@ import { fileURLToPath } from 'node:url';
 import type { CatalogReader } from '../provider/xtream-catalog.js';
 import { createCatalogApiHandler } from './catalog-api.js';
 import {
+  appExternalPath,
+  renderAppBasePathTemplate,
+  stripAppBasePath,
+} from './app-path.js';
+import {
   createMediaApiHandler,
   type MediaApiRuntimeDependencies,
 } from './media-api.js';
@@ -25,6 +30,7 @@ const staticFiles = new Map<string, Readonly<{ relativePath: string; contentType
 export type AppHandlerDependencies = SessionApiDependencies & Readonly<{
   catalog: CatalogReader;
   media: MediaApiRuntimeDependencies;
+  config: SessionApiDependencies['config'] & Readonly<{ appBasePath: string }>;
 }>;
 
 function staticSecurityHeaders(response: ServerResponse): void {
@@ -45,11 +51,14 @@ export function createAppHandler(dependencies: AppHandlerDependencies) {
     catalog: dependencies.catalog,
     cookieName: dependencies.config.cookieName,
     publicOrigin: dependencies.config.publicOrigin,
+    appBasePath: dependencies.config.appBasePath,
     transport: dependencies.media.transport,
     locator: dependencies.media.locator,
     adapter: dependencies.media.adapter,
   });
   return async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
+    const originalUrl = request.url;
+    request.url = stripAppBasePath(originalUrl, dependencies.config.appBasePath);
     try {
       if (await sessionApi(request, response)) return;
       if (await catalogApi(request, response)) return;
@@ -66,7 +75,13 @@ export function createAppHandler(dependencies: AppHandlerDependencies) {
         response.end();
         return;
       }
-      const body = await readFile(fileURLToPath(new URL(staticFile.relativePath, webRoot)));
+      let body = await readFile(fileURLToPath(new URL(staticFile.relativePath, webRoot)));
+      if (staticFile.relativePath === 'index.html') {
+        body = Buffer.from(
+          renderAppBasePathTemplate(body.toString('utf8'), dependencies.config.appBasePath),
+          'utf8',
+        );
+      }
       staticSecurityHeaders(response);
       response.statusCode = 200;
       response.setHeader('Content-Type', staticFile.contentType);
@@ -79,6 +94,10 @@ export function createAppHandler(dependencies: AppHandlerDependencies) {
         response.statusCode = 500;
       }
       response.end(JSON.stringify({ error: { code: 'INTERNAL_ERROR' } }));
+    } finally {
+      request.url = originalUrl;
     }
   };
 }
+
+export { appExternalPath };
