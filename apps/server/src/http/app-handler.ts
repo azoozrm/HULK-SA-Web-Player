@@ -25,6 +25,18 @@ const staticFiles = new Map<string, Readonly<{ relativePath: string; contentType
     '/src/session-client.js',
     { relativePath: 'src/session-client.js', contentType: 'text/javascript; charset=utf-8' },
   ],
+  [
+    '/src/ui-model.js',
+    { relativePath: 'src/ui-model.js', contentType: 'text/javascript; charset=utf-8' },
+  ],
+  [
+    '/assets/hulk-sa-badge.svg',
+    { relativePath: 'assets/hulk-sa-badge.svg', contentType: 'image/svg+xml; charset=utf-8' },
+  ],
+  [
+    '/assets/hulk-sa-lockup.svg',
+    { relativePath: 'assets/hulk-sa-lockup.svg', contentType: 'image/svg+xml; charset=utf-8' },
+  ],
 ]);
 
 export type AppHandlerDependencies = SessionApiDependencies & Readonly<{
@@ -36,7 +48,10 @@ export type AppHandlerDependencies = SessionApiDependencies & Readonly<{
 function staticSecurityHeaders(response: ServerResponse): void {
   response.setHeader('X-Content-Type-Options', 'nosniff');
   response.setHeader('Referrer-Policy', 'no-referrer');
-  response.setHeader('Content-Security-Policy', "default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
+  response.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+  );
 }
 
 export function createAppHandler(dependencies: AppHandlerDependencies) {
