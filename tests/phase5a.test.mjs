@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import {
+  renderAppBasePathTemplate,
+  renderVersionedStaticAssetUrls,
+  resolveVersionedStaticAssetPath,
+} from '../dist/apps/server/src/http/app-path.js';
+import {
   resolveAppPath,
   resolveLoginComposition,
   SHELL_DESTINATIONS,
@@ -36,6 +41,30 @@ test('Phase 5A browser-owned URLs remain base-path safe', () => {
   assert.throws(() => resolveAppPath('/player', 'api/session'));
   assert.throws(() => resolveAppPath('player', '/api/session'));
   assert.throws(() => resolveAppPath('/player/', '/api/session'));
+});
+
+test('Phase 5A static entry assets use a fresh versioned URL while all static responses revalidate', async () => {
+  const revision = 'abcdefghijklmnop';
+  const template = await readFile(new URL('../apps/web/index.html', import.meta.url), 'utf8');
+  const mounted = renderAppBasePathTemplate(template, '/player');
+  const rendered = renderVersionedStaticAssetUrls(mounted, '/player', revision);
+  assert.match(rendered, /href="\/player\/_static\/abcdefghijklmnop\/styles\.css"/u);
+  assert.match(rendered, /src="\/player\/_static\/abcdefghijklmnop\/src\/main\.js"/u);
+  assert.doesNotMatch(rendered, /href="\/player\/styles\.css"/u);
+  assert.doesNotMatch(rendered, /src="\/player\/src\/main\.js"/u);
+  assert.equal(
+    resolveVersionedStaticAssetPath('/_static/abcdefghijklmnop/src/ui-model.js'),
+    '/src/ui-model.js',
+  );
+  assert.equal(resolveVersionedStaticAssetPath('/styles.css'), '/styles.css');
+  assert.throws(() => renderVersionedStaticAssetUrls(mounted, '/player', 'bad'));
+
+  const appHandler = await readFile(
+    new URL('../apps/server/src/http/app-handler.ts', import.meta.url),
+    'utf8',
+  );
+  assert.match(appHandler, /randomBytes\(12\)\.toString\('base64url'\)/u);
+  assert.match(appHandler, /response\.setHeader\('Cache-Control', 'no-cache'\)/u);
 });
 
 test('Phase 5A shell exposes only the authorized navigation foundation', () => {

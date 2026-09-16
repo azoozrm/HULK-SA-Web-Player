@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { fileURLToPath } from 'node:url';
@@ -6,6 +7,8 @@ import { createCatalogApiHandler } from './catalog-api.js';
 import {
   appExternalPath,
   renderAppBasePathTemplate,
+  renderVersionedStaticAssetUrls,
+  resolveVersionedStaticAssetPath,
   stripAppBasePath,
 } from './app-path.js';
 import {
@@ -16,6 +19,7 @@ import type { SessionApiDependencies } from './session-api.js';
 import { createSessionApiHandler } from './session-api.js';
 
 const webRoot = new URL('../../../web/', import.meta.url);
+const staticAssetRevision = randomBytes(12).toString('base64url');
 const staticFiles = new Map<string, Readonly<{ relativePath: string; contentType: string }>>([
   ['/', { relativePath: 'index.html', contentType: 'text/html; charset=utf-8' }],
   ['/index.html', { relativePath: 'index.html', contentType: 'text/html; charset=utf-8' }],
@@ -48,6 +52,7 @@ export type AppHandlerDependencies = SessionApiDependencies & Readonly<{
 function staticSecurityHeaders(response: ServerResponse): void {
   response.setHeader('X-Content-Type-Options', 'nosniff');
   response.setHeader('Referrer-Policy', 'no-referrer');
+  response.setHeader('Cache-Control', 'no-cache');
   response.setHeader(
     'Content-Security-Policy',
     "default-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
@@ -84,7 +89,8 @@ export function createAppHandler(dependencies: AppHandlerDependencies) {
         return;
       }
       const requestUrl = new URL(request.url ?? '/', 'http://hulk.invalid');
-      const staticFile = staticFiles.get(requestUrl.pathname);
+      const staticPath = resolveVersionedStaticAssetPath(requestUrl.pathname);
+      const staticFile = staticFiles.get(staticPath);
       if (!staticFile || requestUrl.search || requestUrl.hash) {
         response.statusCode = 404;
         response.end();
@@ -92,15 +98,22 @@ export function createAppHandler(dependencies: AppHandlerDependencies) {
       }
       let body = await readFile(fileURLToPath(new URL(staticFile.relativePath, webRoot)));
       if (staticFile.relativePath === 'index.html') {
+        const renderedBasePath = renderAppBasePathTemplate(
+          body.toString('utf8'),
+          dependencies.config.appBasePath,
+        );
         body = Buffer.from(
-          renderAppBasePathTemplate(body.toString('utf8'), dependencies.config.appBasePath),
+          renderVersionedStaticAssetUrls(
+            renderedBasePath,
+            dependencies.config.appBasePath,
+            staticAssetRevision,
+          ),
           'utf8',
         );
       }
       staticSecurityHeaders(response);
       response.statusCode = 200;
       response.setHeader('Content-Type', staticFile.contentType);
-      if (staticFile.relativePath === 'index.html') response.setHeader('Cache-Control', 'no-cache');
       response.end(request.method === 'HEAD' ? undefined : body);
     } catch {
       if (!response.headersSent) {
