@@ -1,1 +1,1 @@
-import './dist/apps/server/src/start.js';
+void import('./dist/apps/server/src/start.js');

@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
-import { once } from 'node:events';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { loadRuntimeConfig, RuntimeConfigurationError } from '../dist/apps/server/src/config.js';
 import { deriveSecurityKeys } from '../dist/apps/server/src/crypto/credential-envelope.js';
@@ -170,7 +172,23 @@ test('media locator issuance returns an application-mounted URL', async () => {
   }
 });
 
-test('Passenger startup entry point imports the compiled HULK server', async () => {
-  const startup = await readFile(new URL('../app.js', import.meta.url), 'utf8');
-  assert.equal(startup.trim(), "import './dist/apps/server/src/start.js';");
+test('Passenger startup entry point remains synchronous-require compatible', async () => {
+  const startupUrl = new URL('../app.js', import.meta.url);
+  const startup = await readFile(startupUrl, 'utf8');
+  assert.equal(startup.trim(), "void import('./dist/apps/server/src/start.js');");
+
+  const appPath = fileURLToPath(startupUrl);
+  const probe = spawnSync(
+    process.execPath,
+    [
+      '--input-type=commonjs',
+      '--eval',
+      `require(${JSON.stringify(appPath)}); process.stdout.write('passenger-require-ok'); process.exit(0);`,
+    ],
+    { encoding: 'utf8' },
+  );
+
+  assert.equal(probe.status, 0, probe.stderr);
+  assert.equal(probe.stdout, 'passenger-require-ok');
+  assert.equal(probe.stderr, '');
 });
