@@ -14,12 +14,23 @@ const appBasePath = document.querySelector<HTMLMetaElement>('meta[name="hulk-app
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
+const LOGIN_COPY = Object.freeze({
+  title: 'اهلا بك',
+  description: 'ادخل بيانات اشتراكك للمتابعة',
+  rememberAccount: 'تذكر الحساب',
+  showPassword: 'اظهار كلمة المرور',
+  submit: 'دخول الى HULK',
+  submitting: 'جاري الدخول...',
+  checking: 'جاري التحقق من بيانات الاشتراك...',
+  tooManyAttempts: 'تم تجاوز عدد المحاولات المسموح. حاول لاحقا.',
+  authenticationFailed: 'تعذر تسجيل الدخول. تحقق من بيانات المزود وحالة الاشتراك.',
+  serviceUnavailable: 'تعذر الاتصال بخدمة تسجيل الدخول.',
+});
+
 type IconName =
   | 'portal'
   | 'user'
   | 'lock'
-  | 'eye'
-  | 'eyeOff'
   | 'home'
   | 'live'
   | 'movies'
@@ -40,16 +51,6 @@ const ICON_PATHS: Readonly<Record<IconName, readonly string[]>> = Object.freeze(
     'M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10',
     'M6 10h12v10.5H6Z',
     'M12 14v3',
-  ]),
-  eye: Object.freeze([
-    'M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z',
-    'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
-  ]),
-  eyeOff: Object.freeze([
-    'M4 4 20 20',
-    'M9.6 6.4A10.7 10.7 0 0 1 12 6c6 0 9.5 6 9.5 6a13.2 13.2 0 0 1-2.5 3.2',
-    'M6.1 7.5A13.9 13.9 0 0 0 2.5 12s3.5 6 9.5 6a10.4 10.4 0 0 0 3.2-.5',
-    'M10.3 10.3a3 3 0 0 0 4.2 4.2',
   ]),
   home: Object.freeze([
     'M3 11.5 12 4l9 7.5',
@@ -142,6 +143,24 @@ function createButton(label: string, className: string, type: 'button' | 'submit
   return element;
 }
 
+function createLoginOption(label: string): HTMLButtonElement {
+  const option = document.createElement('button');
+  option.type = 'button';
+  option.className = 'login-option-toggle';
+  option.setAttribute('aria-pressed', 'false');
+  option.setAttribute('data-login-focus', 'true');
+  option.setAttribute('data-login-option', 'true');
+
+  const indicator = document.createElement('span');
+  indicator.className = 'login-option-indicator';
+  indicator.setAttribute('aria-hidden', 'true');
+  const text = document.createElement('span');
+  text.className = 'login-option-label';
+  text.textContent = label;
+  option.append(indicator, text);
+  return option;
+}
+
 function syncLoginComposition(): void {
   if (!activeLoginStage) return;
   activeLoginStage.dataset.composition = resolveLoginComposition(window.innerWidth, window.innerHeight);
@@ -194,7 +213,6 @@ function createField(
   labelText: string,
   input: HTMLInputElement,
   iconName: IconName,
-  trailingControl?: HTMLElement,
 ): HTMLDivElement {
   const field = document.createElement('div');
   field.className = 'field-control';
@@ -210,7 +228,6 @@ function createField(
   icon.className = 'field-icon';
   icon.append(createIcon(iconName));
   frame.append(icon, input);
-  if (trailingControl) frame.append(trailingControl);
 
   field.append(label, frame);
   return field;
@@ -218,12 +235,28 @@ function createField(
 
 function attachLoginDirectionalNavigation(form: HTMLFormElement): void {
   form.addEventListener('keydown', (event) => {
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
     const controls = Array.from(
       form.querySelectorAll<HTMLElement>('[data-login-focus="true"]'),
     ).filter((control) => !('disabled' in control) || !control.disabled);
-    const currentIndex = controls.indexOf(document.activeElement as HTMLElement);
+    const current = document.activeElement as HTMLElement;
+    const currentIndex = controls.indexOf(current);
     if (currentIndex < 0 || controls.length < 2) return;
+
+    if (
+      current.dataset.loginOption === 'true' &&
+      (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
+    ) {
+      const options = controls.filter((control) => control.dataset.loginOption === 'true');
+      const optionIndex = options.indexOf(current);
+      if (optionIndex < 0 || options.length < 2) return;
+      event.preventDefault();
+      const delta = event.key === 'ArrowLeft' ? 1 : -1;
+      const nextIndex = (optionIndex + delta + options.length) % options.length;
+      options[nextIndex]?.focus({ preventScroll: true });
+      return;
+    }
+
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
     event.preventDefault();
     const delta = event.key === 'ArrowDown' ? 1 : -1;
     const nextIndex = (currentIndex + delta + controls.length) % controls.length;
@@ -249,10 +282,10 @@ function renderSignedOut(error: string | null): void {
   heading.className = 'login-heading';
   const title = document.createElement('h1');
   title.id = 'login-title';
-  title.textContent = 'أهلاً بك';
+  title.textContent = LOGIN_COPY.title;
   const description = document.createElement('p');
   description.id = 'login-description';
-  description.textContent = 'أدخل بيانات اشتراكك للمتابعة';
+  description.textContent = LOGIN_COPY.description;
   heading.append(title, description);
 
   const form = document.createElement('form');
@@ -280,7 +313,7 @@ function renderSignedOut(error: string | null): void {
   username.autocomplete = 'off';
   username.autocapitalize = 'none';
   username.spellcheck = false;
-  username.dir = 'ltr';
+  username.dir = 'auto';
   username.placeholder = 'اسم المستخدم';
   username.setAttribute('data-login-focus', 'true');
 
@@ -291,35 +324,33 @@ function renderSignedOut(error: string | null): void {
   password.required = true;
   password.maxLength = 512;
   password.autocomplete = 'off';
-  password.dir = 'ltr';
+  password.dir = 'auto';
   password.placeholder = 'كلمة المرور';
   password.setAttribute('data-login-focus', 'true');
 
+  let rememberAccount = false;
+  const remember = createLoginOption(LOGIN_COPY.rememberAccount);
+  remember.addEventListener('click', () => {
+    rememberAccount = !rememberAccount;
+    remember.setAttribute('aria-pressed', String(rememberAccount));
+  });
+
   let showPassword = false;
-  const visibility = document.createElement('button');
-  visibility.type = 'button';
-  visibility.className = 'password-toggle';
+  const visibility = createLoginOption(LOGIN_COPY.showPassword);
   visibility.setAttribute('aria-controls', password.id);
-  visibility.setAttribute('aria-pressed', 'false');
-  visibility.setAttribute('aria-label', 'إظهار كلمة المرور');
-  visibility.title = 'إظهار كلمة المرور';
-  visibility.setAttribute('data-login-focus', 'true');
-  visibility.append(createIcon('eye'));
   visibility.addEventListener('click', () => {
     showPassword = !showPassword;
     password.type = showPassword ? 'text' : 'password';
-    const label = showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور';
     visibility.setAttribute('aria-pressed', String(showPassword));
-    visibility.setAttribute('aria-label', label);
-    visibility.title = label;
-    visibility.replaceChildren(createIcon(showPassword ? 'eyeOff' : 'eye'));
-    password.focus({ preventScroll: true });
   });
 
-  const submit = createButton('دخول إلى HULK', 'primary-action', 'submit');
+  const options = document.createElement('div');
+  options.className = 'login-options';
+  options.setAttribute('aria-label', 'خيارات تسجيل الدخول');
+  options.append(remember, visibility);
+
+  const submit = createButton(LOGIN_COPY.submit, 'primary-action', 'submit');
   submit.setAttribute('data-login-focus', 'true');
-  const submitIcon = createIcon('lock');
-  submit.prepend(submitIcon);
 
   const feedback = document.createElement('p');
   feedback.className = 'form-feedback';
@@ -333,7 +364,8 @@ function renderSignedOut(error: string | null): void {
   form.append(
     createField('رابط المزود / البوابة', host, 'portal'),
     createField('اسم المستخدم', username, 'user'),
-    createField('كلمة المرور', password, 'lock', visibility),
+    createField('كلمة المرور', password, 'lock'),
+    options,
     submit,
     feedback,
   );
@@ -345,10 +377,11 @@ function renderSignedOut(error: string | null): void {
     host.disabled = busy;
     username.disabled = busy;
     password.disabled = busy;
+    remember.disabled = busy;
     visibility.disabled = busy;
     submit.disabled = busy;
     submit.classList.toggle('is-loading', busy);
-    submit.querySelector('span')!.textContent = busy ? 'جارٍ الدخول…' : 'دخول إلى HULK';
+    submit.querySelector('span')!.textContent = busy ? LOGIN_COPY.submitting : LOGIN_COPY.submit;
   };
 
   form.addEventListener('submit', async (event) => {
@@ -359,12 +392,13 @@ function renderSignedOut(error: string | null): void {
     submitting = true;
     setBusy(true);
     feedback.classList.remove('is-error');
-    feedback.textContent = 'جارٍ التحقق من بيانات الاشتراك…';
+    feedback.textContent = LOGIN_COPY.checking;
 
     const payload = {
       host: host.value.trim(),
       username: username.value.trim(),
       password: password.value,
+      rememberAccount,
     };
     password.value = '';
 
@@ -377,8 +411,8 @@ function renderSignedOut(error: string | null): void {
       });
       if (!response.ok) {
         feedback.textContent = response.status === 429
-          ? 'تم تجاوز عدد المحاولات المسموح. حاول لاحقاً.'
-          : 'تعذر تسجيل الدخول. تحقق من بيانات المزود وحالة الاشتراك.';
+          ? LOGIN_COPY.tooManyAttempts
+          : LOGIN_COPY.authenticationFailed;
         feedback.classList.add('is-error');
         return;
       }
@@ -391,7 +425,7 @@ function renderSignedOut(error: string | null): void {
       viewState = Object.freeze({ kind: 'signed-in', session, busy: false, error: null });
       render();
     } catch {
-      feedback.textContent = 'تعذر الاتصال بخدمة تسجيل الدخول.';
+      feedback.textContent = LOGIN_COPY.serviceUnavailable;
       feedback.classList.add('is-error');
     } finally {
       payload.password = '';

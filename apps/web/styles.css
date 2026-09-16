@@ -98,9 +98,9 @@ svg {
   min-block-size: 100vh;
   min-block-size: 100dvh;
   background:
-    radial-gradient(circle at 72% 18%, rgb(230 195 82 / 8%), transparent 34rem),
-    radial-gradient(circle at 18% 86%, rgb(154 122 35 / 7%), transparent 32rem),
-    linear-gradient(145deg, #080a08 0%, var(--hulk-background) 48%, #090a05 100%);
+    radial-gradient(ellipse at 75% 8%, rgb(230 195 82 / 10%), transparent 34rem),
+    radial-gradient(ellipse at 18% 82%, rgb(154 122 35 / 7%), transparent 30rem),
+    linear-gradient(150deg, #0a0b08 0%, #030402 48%, #070803 100%);
 }
 
 .login-stage {
@@ -111,10 +111,14 @@ svg {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-content: center;
-  gap: clamp(1rem, 3vh, 2rem);
+  gap: clamp(0.8rem, 2.2vh, 1.4rem);
   overflow: auto;
   padding-block: var(--hulk-safe-top) var(--hulk-safe-bottom);
   padding-inline: var(--hulk-safe-right) var(--hulk-safe-left);
+  background:
+    radial-gradient(circle at 50% 17%, rgb(230 195 82 / 8%), transparent 24rem),
+    radial-gradient(circle at 50% 74%, rgb(154 122 35 / 5%), transparent 30rem),
+    linear-gradient(180deg, rgb(11 12 8 / 76%), rgb(3 4 2 / 96%));
 }
 
 .login-stage::before,
@@ -128,22 +132,20 @@ svg {
 .login-stage::before {
   inset: 0;
   background:
-    linear-gradient(rgb(255 255 255 / 1.4%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 1.1%) 1px, transparent 1px);
-  background-size: 3rem 3rem;
-  mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
-  opacity: 0.35;
+    radial-gradient(ellipse at center, transparent 28%, rgb(0 0 0 / 24%) 68%, rgb(0 0 0 / 58%) 100%),
+    linear-gradient(125deg, rgb(255 255 255 / 1.5%), transparent 28%, rgb(230 195 82 / 1.8%) 62%, transparent 82%);
 }
 
 .login-stage::after {
-  inline-size: min(70vw, 52rem);
-  aspect-ratio: 1;
+  inline-size: min(78vw, 44rem);
+  aspect-ratio: 1.35;
   inset-inline-start: 50%;
-  inset-block-start: 50%;
+  inset-block-start: 47%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgb(230 195 82 / 8%), transparent 67%);
-  filter: blur(1rem);
+  background: radial-gradient(ellipse, rgb(230 195 82 / 7%), transparent 68%);
+  filter: blur(1.4rem);
+  opacity: 0.9;
 }
 
 .login-brand {
@@ -154,31 +156,33 @@ svg {
 }
 
 .brand-badge {
-  inline-size: clamp(5.5rem, 23vw, 8.25rem);
+  inline-size: clamp(5.1rem, 20vw, 6.5rem);
   aspect-ratio: 1;
   object-fit: contain;
-  border-radius: clamp(1.25rem, 4vw, 2rem);
+  border-radius: clamp(1.15rem, 3.5vw, 1.6rem);
   box-shadow:
-    0 1.25rem 3.5rem rgb(0 0 0 / 38%),
-    0 0 2.5rem rgb(230 195 82 / 10%);
+    0 1rem 2.6rem rgb(0 0 0 / 42%),
+    0 0 1.8rem rgb(230 195 82 / 9%);
 }
 
 .login-panel {
-  inline-size: min(100%, 30rem);
+  inline-size: min(100%, 28.75rem);
   justify-self: center;
-  padding: clamp(1.25rem, 5vw, 2rem);
-  border: 1px solid var(--hulk-line-strong);
-  border-radius: var(--hulk-radius-lg);
+  padding: clamp(1.15rem, 4.6vw, 1.65rem);
+  border: 1px solid rgb(230 195 82 / 42%);
+  border-radius: clamp(1.3rem, 5vw, 1.65rem);
   background:
-    linear-gradient(145deg, rgb(27 26 14 / 86%), rgb(10 12 9 / 92%)),
-    var(--hulk-surface);
-  box-shadow: var(--hulk-shadow);
-  backdrop-filter: blur(1.1rem);
-  -webkit-backdrop-filter: blur(1.1rem);
+    radial-gradient(circle at 82% 0%, rgb(230 195 82 / 5%), transparent 15rem),
+    linear-gradient(155deg, rgb(22 22 12 / 91%), rgb(7 9 6 / 96%));
+  box-shadow:
+    0 1.3rem 3.4rem rgb(0 0 0 / 46%),
+    inset 0 1px rgb(255 255 255 / 4%);
+  backdrop-filter: blur(1rem);
+  -webkit-backdrop-filter: blur(1rem);
 }
 
 .login-heading {
-  margin-block-end: clamp(1.25rem, 4vh, 1.75rem);
+  margin-block-end: clamp(1rem, 3vh, 1.35rem);
   text-align: center;
 }
 
@@ -186,47 +190,51 @@ svg {
 .loading-panel h1 {
   margin: 0;
   color: var(--hulk-text);
-  font-size: clamp(1.8rem, 7vw, 2.45rem);
-  line-height: 1.2;
+  font-size: clamp(1.7rem, 6.3vw, 2.15rem);
+  line-height: 1.18;
   font-weight: 800;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
 }
 
 .login-heading p,
 .loading-copy {
-  margin: 0.45rem 0 0;
+  margin: 0.38rem 0 0;
   color: var(--hulk-text-muted);
-  font-size: clamp(0.92rem, 3vw, 1rem);
-  line-height: 1.65;
+  font-size: clamp(0.86rem, 2.9vw, 0.95rem);
+  line-height: 1.6;
 }
 
 .login-form {
   display: grid;
-  gap: 0.95rem;
+  gap: 0.78rem;
 }
 
 .field-control {
   display: grid;
-  gap: 0.38rem;
+  gap: 0.32rem;
 }
 
 .field-label {
-  padding-inline: 0.25rem;
+  direction: rtl;
+  padding-inline: 0.2rem;
   color: var(--hulk-text-muted);
-  font-size: 0.83rem;
+  font-size: 0.8rem;
   font-weight: 650;
+  line-height: 1.45;
+  text-align: start;
 }
 
 .input-frame {
-  min-block-size: 3.4rem;
+  min-block-size: 3.2rem;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.55rem;
-  padding-inline: 0.8rem;
-  border: 1px solid rgb(184 179 164 / 35%);
-  border-radius: var(--hulk-radius-md);
-  background: rgb(3 4 2 / 44%);
+  gap: 0.65rem;
+  padding-inline: 0.82rem;
+  border: 1px solid rgb(184 179 164 / 31%);
+  border-radius: 0.95rem;
+  background: rgb(1 3 1 / 58%);
+  box-shadow: inset 0 1px rgb(255 255 255 / 2%);
   transition:
     border-color 150ms ease,
     background-color 150ms ease,
@@ -234,13 +242,15 @@ svg {
 }
 
 .input-frame:hover {
-  border-color: rgb(230 195 82 / 48%);
+  border-color: rgb(230 195 82 / 44%);
 }
 
 .input-frame:focus-within {
-  border-color: var(--hulk-gold);
-  background: rgb(17 17 8 / 82%);
-  box-shadow: inset 0 0 0 1px rgb(230 195 82 / 14%);
+  border-color: rgb(230 195 82 / 82%);
+  background: rgb(11 12 7 / 90%);
+  box-shadow:
+    inset 0 0 0 1px rgb(230 195 82 / 10%),
+    0 0 0 0.14rem rgb(230 195 82 / 6%);
 }
 
 .field-icon {
@@ -249,67 +259,148 @@ svg {
   color: var(--hulk-gold-bright);
 }
 
+.field-icon .ui-icon {
+  inline-size: 1.32rem;
+  block-size: 1.32rem;
+  stroke-width: 1.8;
+}
+
 .input-frame input {
   inline-size: 100%;
   min-inline-size: 0;
-  min-block-size: 3.2rem;
+  min-block-size: 3rem;
   padding: 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--hulk-text);
   caret-color: var(--hulk-gold-bright);
-  font-size: 1rem;
+  font-size: 0.96rem;
   text-align: start;
 }
 
+.input-frame input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.input-frame input[dir="ltr"] {
+  text-align: left;
+}
+
 .input-frame input::placeholder {
-  color: rgb(184 179 164 / 72%);
+  color: rgb(184 179 164 / 68%);
   opacity: 1;
+}
+
+.input-frame input[dir="auto"]::placeholder {
+  direction: rtl;
+  text-align: right;
 }
 
 .input-frame input:disabled {
   opacity: 0.7;
 }
 
-.password-toggle {
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
-  min-block-size: 2.75rem;
+.login-options {
   display: grid;
-  place-items: center;
-  padding: 0;
-  border-radius: 0.7rem;
-  background: transparent;
-  color: var(--hulk-text-muted);
-  transition:
-    color 150ms ease,
-    background-color 150ms ease;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-block: 0.02rem 0.05rem;
 }
 
-.password-toggle:hover,
-.password-toggle[aria-pressed="true"] {
-  background: rgb(230 195 82 / 10%);
+.login-option-toggle {
+  min-inline-size: 0;
+  min-block-size: 2.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.48rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 0.72rem;
+  background: transparent;
+  color: var(--hulk-text-muted);
+  font-size: 0.79rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: start;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.login-option-toggle:hover {
+  background: rgb(230 195 82 / 6%);
+  color: var(--hulk-text);
+}
+
+.login-option-toggle[aria-pressed="true"] {
   color: var(--hulk-gold-bright);
+}
+
+.login-option-toggle:focus-visible {
+  outline-width: 0.14rem;
+  outline-offset: 0.05rem;
+  box-shadow: none;
+  border-color: rgb(230 195 82 / 35%);
+}
+
+.login-option-indicator {
+  position: relative;
+  inline-size: 1.05rem;
+  block-size: 1.05rem;
+  flex: 0 0 auto;
+  border: 1px solid rgb(184 179 164 / 48%);
+  border-radius: 0.32rem;
+  background: rgb(0 0 0 / 24%);
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.login-option-toggle[aria-pressed="true"] .login-option-indicator {
+  border-color: var(--hulk-gold);
+  background: linear-gradient(145deg, #fff0a8, #d6ad39);
+  box-shadow: 0 0 0.65rem rgb(230 195 82 / 13%);
+}
+
+.login-option-toggle[aria-pressed="true"] .login-option-indicator::after {
+  content: "";
+  position: absolute;
+  inline-size: 0.42rem;
+  block-size: 0.2rem;
+  inset-inline-start: 50%;
+  inset-block-start: 45%;
+  border-inline-start: 0.12rem solid #100e04;
+  border-block-end: 0.12rem solid #100e04;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.login-option-label {
+  min-inline-size: 0;
+  white-space: nowrap;
 }
 
 .primary-action {
   inline-size: 100%;
-  min-block-size: 3.35rem;
+  min-block-size: 3.3rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.55rem;
-  margin-block-start: 0.2rem;
-  padding-inline: 1.1rem;
+  margin-block-start: 0.08rem;
+  padding-inline: 1.05rem;
   border: 1px solid var(--hulk-gold-bright);
-  border-radius: var(--hulk-radius-md);
-  background: linear-gradient(135deg, #fff06f 0%, #e6c352 50%, #c99b28 100%);
+  border-radius: 0.95rem;
+  background: linear-gradient(135deg, #fff06f 0%, #e6c352 52%, #c99b28 100%);
   color: #100e04;
   box-shadow:
-    0 0.7rem 1.8rem rgb(230 195 82 / 17%),
-    inset 0 1px rgb(255 255 255 / 35%);
-  font-weight: 800;
+    0 0.65rem 1.55rem rgb(230 195 82 / 16%),
+    inset 0 1px rgb(255 255 255 / 38%);
+  font-weight: 850;
+  letter-spacing: 0.005em;
   transition:
     transform 140ms ease,
     filter 140ms ease,
@@ -317,27 +408,31 @@ svg {
 }
 
 .primary-action:not(:disabled):hover {
-  filter: brightness(1.06);
+  filter: brightness(1.055);
   box-shadow:
-    0 0.9rem 2rem rgb(230 195 82 / 23%),
-    inset 0 1px rgb(255 255 255 / 40%);
+    0 0.85rem 1.85rem rgb(230 195 82 / 21%),
+    inset 0 1px rgb(255 255 255 / 42%);
 }
 
 .primary-action:not(:disabled):active {
   transform: translateY(1px) scale(0.995);
 }
 
-.primary-action.is-loading .ui-icon {
-  animation: hulk-pulse 900ms ease-in-out infinite alternate;
+.primary-action.is-loading span {
+  opacity: 0.82;
 }
 
 .form-feedback {
-  min-block-size: 1.55rem;
+  min-block-size: 1.35rem;
   margin: 0;
   color: var(--hulk-text-muted);
-  font-size: 0.86rem;
-  line-height: 1.5;
+  font-size: 0.82rem;
+  line-height: 1.45;
   text-align: center;
+}
+
+.form-feedback:empty {
+  min-block-size: 0;
 }
 
 .form-feedback.is-error,
@@ -346,11 +441,11 @@ svg {
 }
 
 .loading-panel {
-  min-block-size: 14rem;
+  min-block-size: 13rem;
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 1rem;
+  gap: 0.9rem;
   text-align: center;
 }
 
@@ -591,16 +686,22 @@ svg {
 
 @media (max-width: 24rem) {
   .login-panel {
-    padding-inline: 1rem;
+    padding-inline: 0.95rem;
     border-radius: 1.2rem;
   }
 
   .login-stage {
-    gap: 0.8rem;
+    gap: 0.65rem;
   }
 
   .brand-badge {
-    inline-size: 5.25rem;
+    inline-size: 4.9rem;
+  }
+
+  .login-option-toggle {
+    gap: 0.35rem;
+    padding-inline: 0.28rem;
+    font-size: 0.72rem;
   }
 
   .shell-nav-item span {
@@ -610,7 +711,7 @@ svg {
 
 .login-stage[data-composition="split"] {
   direction: ltr;
-  grid-template-columns: minmax(15rem, 1fr) minmax(24rem, 32rem);
+  grid-template-columns: minmax(15rem, 1fr) minmax(24rem, 31rem);
   align-items: center;
   align-content: center;
   column-gap: clamp(2rem, 6vw, 6rem);
@@ -625,52 +726,56 @@ svg {
 }
 
 .login-stage[data-composition="split"] .brand-badge {
-  inline-size: clamp(13rem, 25vw, 21rem);
-  border-radius: clamp(2rem, 3vw, 3.25rem);
+  inline-size: clamp(11.5rem, 22vw, 18rem);
+  border-radius: clamp(1.9rem, 3vw, 2.9rem);
 }
 
 .login-stage[data-composition="split"] .login-panel {
   inline-size: 100%;
-  padding: clamp(1.5rem, 3vw, 2.25rem);
-  border-radius: 1.75rem;
+  padding: clamp(1.4rem, 2.6vw, 1.9rem);
+  border-radius: 1.55rem;
 }
 
 .login-stage[data-composition="split"] .login-heading h1,
 .login-stage[data-composition="split"] .loading-panel h1 {
-  font-size: clamp(2rem, 3.3vw, 2.7rem);
+  font-size: clamp(1.9rem, 3vw, 2.45rem);
 }
 
 @media (orientation: landscape) and (max-height: 35rem) {
   .login-stage {
     align-content: start;
-    gap: 0.8rem;
-    padding-block: max(0.65rem, env(safe-area-inset-top)) max(0.65rem, env(safe-area-inset-bottom));
+    gap: 0.55rem;
+    padding-block: max(0.55rem, env(safe-area-inset-top)) max(0.55rem, env(safe-area-inset-bottom));
   }
 
   .login-stage:not([data-composition="split"]) .brand-badge {
-    inline-size: 4.75rem;
+    inline-size: 4.35rem;
   }
 
   .login-panel {
-    padding-block: 1rem;
+    padding-block: 0.9rem;
   }
 
   .login-heading {
-    margin-block-end: 0.8rem;
+    margin-block-end: 0.65rem;
   }
 
   .login-form {
-    gap: 0.65rem;
+    gap: 0.55rem;
   }
 
   .field-label {
-    font-size: 0.76rem;
+    font-size: 0.74rem;
   }
 
   .input-frame,
   .input-frame input,
   .primary-action {
-    min-block-size: 3rem;
+    min-block-size: 2.9rem;
+  }
+
+  .login-option-toggle {
+    min-block-size: 2.35rem;
   }
 }
 
@@ -766,17 +871,22 @@ svg {
   }
 
   .login-stage[data-composition="split"] .login-panel {
-    max-inline-size: 34rem;
+    max-inline-size: 33rem;
   }
 
   .input-frame,
   .primary-action {
-    min-block-size: 3.75rem;
+    min-block-size: 3.55rem;
   }
 
   .input-frame input {
-    min-block-size: 3.55rem;
-    font-size: 1.08rem;
+    min-block-size: 3.35rem;
+    font-size: 1.04rem;
+  }
+
+  .login-option-toggle {
+    min-block-size: 2.8rem;
+    font-size: 0.86rem;
   }
 
   .shell-nav-sidebar .shell-nav-item {
@@ -792,6 +902,11 @@ svg {
     outline-width: 0.25rem;
     outline-offset: 0.28rem;
     box-shadow: 0 0 0 0.5rem rgb(255 240 168 / 18%);
+  }
+
+  .input-frame input:focus-visible {
+    outline: none;
+    box-shadow: none;
   }
 }
 
@@ -824,11 +939,5 @@ svg {
 @keyframes hulk-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes hulk-pulse {
-  to {
-    opacity: 0.55;
   }
 }
