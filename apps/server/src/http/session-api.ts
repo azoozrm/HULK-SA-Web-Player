@@ -19,6 +19,11 @@ export type SessionApiDependencies = Readonly<{
   config: SessionHttpConfig;
 }>;
 
+type ParsedLoginRequest = Readonly<{
+  credentials: ProviderLoginRequest;
+  rememberAccount: boolean;
+}>;
+
 class RequestValidationError extends Error {}
 
 function setSecurityHeaders(response: ServerResponse): void {
@@ -62,22 +67,25 @@ function sessionCookie(
   token: string,
   expiresAt: string,
   secure: boolean,
+  persistent: boolean,
 ): string {
-  const expiresAtMs = Date.parse(expiresAt);
-  const maxAge = Number.isFinite(expiresAtMs)
-    ? Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000))
-    : 0;
-  return [
+  const parts = [
     `${cookieName}=${token}`,
     'Path=/',
     'HttpOnly',
     secure ? 'Secure' : null,
     'SameSite=Strict',
-    `Max-Age=${maxAge}`,
-    `Expires=${new Date(expiresAtMs).toUTCString()}`,
-  ]
-    .filter((part): part is string => part !== null)
-    .join('; ');
+  ].filter((part): part is string => part !== null);
+
+  if (persistent) {
+    const expiresAtMs = Date.parse(expiresAt);
+    const maxAge = Number.isFinite(expiresAtMs)
+      ? Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000))
+      : 0;
+    parts.push(`Max-Age=${maxAge}`, `Expires=${new Date(expiresAtMs).toUTCString()}`);
+  }
+
+  return parts.join('; ');
 }
 
 function clearedSessionCookie(cookieName: string, secure: boolean): string {
@@ -133,19 +141,25 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
   }
 }
 
-function parseLoginRequest(value: unknown): ProviderLoginRequest {
+function parseLoginRequest(value: unknown): ParsedLoginRequest {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new RequestValidationError('Login request is invalid.');
   }
   const record = value as Readonly<Record<string, unknown>>;
+  const rememberAccount = record.rememberAccount;
   const keys = Object.keys(record).sort();
-  if (keys.join(',') !== 'host,password,username') {
+  const shape = keys.join(',');
+  if (
+    shape !== 'host,password,username' &&
+    shape !== 'host,password,rememberAccount,username'
+  ) {
     throw new RequestValidationError('Login request has an invalid shape.');
   }
   if (
     typeof record.host !== 'string' ||
     typeof record.username !== 'string' ||
-    typeof record.password !== 'string'
+    typeof record.password !== 'string' ||
+    (rememberAccount !== undefined && typeof rememberAccount !== 'boolean')
   ) {
     throw new RequestValidationError('Login fields are invalid.');
   }
@@ -163,7 +177,11 @@ function parseLoginRequest(value: unknown): ProviderLoginRequest {
   ) {
     throw new RequestValidationError('Login fields are invalid.');
   }
-  return Object.freeze({ host, username, password });
+
+  return Object.freeze({
+    credentials: Object.freeze({ host, username, password }),
+    rememberAccount: rememberAccount === undefined ? true : rememberAccount,
+  });
 }
 
 function clientIdentity(request: IncomingMessage): string {
@@ -204,9 +222,9 @@ export function createSessionApiHandler(dependencies: SessionApiDependencies) {
         return true;
       }
 
-      let login: ProviderLoginRequest;
+      let requestLogin: ParsedLoginRequest;
       try {
-        login = parseLoginRequest(await readJsonBody(request));
+        requestLogin = parseLoginRequest(await readJsonBody(request));
       } catch (error) {
         writeJson(
           response,
@@ -220,6 +238,7 @@ export function createSessionApiHandler(dependencies: SessionApiDependencies) {
         return true;
       }
 
+      const { credentials: login, rememberAccount } = requestLogin;
       try {
         const rateLimit = await dependencies.rateLimiter.consume(
           clientIdentity(request),
@@ -246,6 +265,7 @@ export function createSessionApiHandler(dependencies: SessionApiDependencies) {
             established.bearerToken,
             established.descriptor.expiresAt,
             dependencies.config.secureCookie,
+            rememberAccount,
           ),
         );
         writeJson(response, 201, established.descriptor);
