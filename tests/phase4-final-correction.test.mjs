@@ -146,3 +146,62 @@ test('HLS URI attributes fail closed on malformed case while valid uppercase and
   assert.match(optionalWithoutUri, /#EXT-X-KEY:METHOD=NONE/u);
   assert.match(optionalWithoutUri, /\/api\/media\/r\/opaque-locator/u);
 });
+
+test('HLS Content Steering and other known unsupported client-fetch URI surfaces fail closed', () => {
+  const manifestUrl = new URL('https://provider.example/root/master.m3u8');
+  const locator = () => '/api/media/r/opaque-locator';
+  const steeringLines = [
+    '#EXT-X-CONTENT-STEERING:SERVER-URI="https://steering.example/manifest.json"',
+    '#EXT-X-CONTENT-STEERING:SERVER-URI="http://steering.example/manifest.json"',
+    '#EXT-X-CONTENT-STEERING:SERVER-URI="data:application/json,%7B%7D"',
+    '#EXT-X-CONTENT-STEERING:SERVER-URI="//steering.example/manifest.json"',
+    '#EXT-X-CONTENT-STEERING:SERVER-URI="steering/manifest.json"',
+    '#EXT-X-CONTENT-STEERING:server-uri="steering/manifest.json"',
+    '#EXT-X-CONTENT-STEERING:Server-Uri="steering/manifest.json"',
+  ];
+
+  for (const line of steeringLines) {
+    assert.throws(
+      () => rewriteHlsManifest(
+        Buffer.from(`#EXTM3U\n${line}\n`, 'utf8'),
+        manifestUrl,
+        locator,
+      ),
+      HlsManifestError,
+    );
+  }
+
+  const unsupportedDateRangeLines = [
+    '#EXT-X-DATERANGE:ID="ad1",CLASS="com.apple.hls.interstitial",X-ASSET-URI="ad.m3u8"',
+    '#EXT-X-DATERANGE:ID="ad2",CLASS="com.apple.hls.interstitial",X-ASSET-LIST="assets.json"',
+    '#EXT-X-DATERANGE:ID="preload1",CLASS="com.apple.hls.preload",X-URI="resource.json"',
+    '#EXT-X-DATERANGE:ID="ad3",CLASS="com.apple.hls.interstitial",x-asset-uri="ad.m3u8"',
+  ];
+
+  for (const line of unsupportedDateRangeLines) {
+    assert.throws(
+      () => rewriteHlsManifest(
+        Buffer.from(`#EXTM3U\n${line}\n`, 'utf8'),
+        manifestUrl,
+        locator,
+      ),
+      HlsManifestError,
+    );
+  }
+
+  const rewritten = rewriteHlsManifest(
+    Buffer.from(
+      '#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="https://cdn.example/key"\n#EXT-X-KEY:METHOD=NONE\nsegment.ts\n',
+      'utf8',
+    ),
+    manifestUrl,
+    locator,
+  ).toString('utf8');
+  assert.match(rewritten, /URI="\/api\/media\/r\/opaque-locator"/u);
+  assert.match(rewritten, /#EXT-X-KEY:METHOD=NONE/u);
+  assert.equal(rewritten.includes('provider.example'), false);
+  assert.equal(rewritten.includes('cdn.example'), false);
+  assert.equal(rewritten.includes('steering.example'), false);
+  assert.equal(rewritten.includes('http://'), false);
+  assert.equal(rewritten.includes('https://'), false);
+});

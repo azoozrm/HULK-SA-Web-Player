@@ -26,6 +26,10 @@ const URI_TAGS = new Map<string, Readonly<{ resource: HlsNestedResourceKind; req
   ['#EXT-X-RENDITION-REPORT', { resource: 'manifest', required: true }],
 ]);
 
+const UNSUPPORTED_URI_ATTRIBUTES = new Map<string, readonly string[]>([
+  ['#EXT-X-DATERANGE', ['X-ASSET-URI', 'X-ASSET-LIST', 'X-URI']],
+]);
+
 function resolveMediaUri(raw: string, manifestUri: URL): URL {
   if (!raw || raw.length > 8192 || /[\u0000-\u001F\u007F]/u.test(raw)) {
     throw new HlsManifestError();
@@ -72,19 +76,34 @@ function attributeSegments(line: string): readonly string[] {
   return Object.freeze(segments);
 }
 
+function attributeName(segment: string): string | null {
+  const trimmed = segment.trim();
+  const separator = trimmed.indexOf('=');
+  if (separator < 1) return null;
+  const name = trimmed.slice(0, separator).trim();
+  return name || null;
+}
+
 function parsedUriAttributes(line: string): readonly string[] {
   const values: string[] = [];
   for (const segment of attributeSegments(line)) {
-    const trimmed = segment.trim();
-    const separator = trimmed.indexOf('=');
-    if (separator < 1) continue;
-    const name = trimmed.slice(0, separator).trim();
-    if (name.toUpperCase() !== 'URI') continue;
-    const match = /^URI="([^"\r\n]*)"$/u.exec(trimmed);
+    const name = attributeName(segment);
+    if (name?.toUpperCase() !== 'URI') continue;
+    const match = /^URI="([^"\r\n]*)"$/u.exec(segment.trim());
     if (!match) throw new HlsManifestError();
     values.push(match[1] ?? '');
   }
   return Object.freeze(values);
+}
+
+function hasUnsupportedUriAttribute(line: string, normalizedTag: string): boolean {
+  const unsupported = UNSUPPORTED_URI_ATTRIBUTES.get(normalizedTag);
+  if (!unsupported) return false;
+  for (const segment of attributeSegments(line)) {
+    const name = attributeName(segment);
+    if (name && unsupported.includes(name.toUpperCase())) return true;
+  }
+  return false;
 }
 
 function rewriteUriAttribute(
@@ -140,6 +159,11 @@ export function rewriteHlsManifest(
       continue;
     }
 
+    const currentTag = tagName(trimmed);
+    const normalizedTag = currentTag.toUpperCase();
+    if (normalizedTag === '#EXT-X-CONTENT-STEERING') throw new HlsManifestError();
+    if (hasUnsupportedUriAttribute(trimmed, normalizedTag)) throw new HlsManifestError();
+
     const uriAttributes = parsedUriAttributes(trimmed);
     if (trimmed.startsWith('#EXT-X-STREAM-INF:')) {
       if (uriAttributes.length !== 0) throw new HlsManifestError();
@@ -148,7 +172,7 @@ export function rewriteHlsManifest(
       continue;
     }
 
-    const configuration = URI_TAGS.get(tagName(trimmed));
+    const configuration = URI_TAGS.get(currentTag);
     if (configuration) {
       if (configuration.required && uriAttributes.length !== 1) throw new HlsManifestError();
       if (uriAttributes.length > 1) throw new HlsManifestError();
