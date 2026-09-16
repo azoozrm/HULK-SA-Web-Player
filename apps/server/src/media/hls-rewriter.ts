@@ -52,18 +52,52 @@ function tagName(line: string): string {
   return colon === -1 ? line : line.slice(0, colon);
 }
 
-function rewriteUriAttributes(
+function attributeSegments(line: string): readonly string[] {
+  const colon = line.indexOf(':');
+  if (colon === -1) return Object.freeze([]);
+  const attributes = line.slice(colon + 1);
+  const segments: string[] = [];
+  let start = 0;
+  let quoted = false;
+  for (let index = 0; index < attributes.length; index += 1) {
+    const character = attributes[index];
+    if (character === '"') quoted = !quoted;
+    if (character === ',' && !quoted) {
+      segments.push(attributes.slice(start, index));
+      start = index + 1;
+    }
+  }
+  if (quoted) throw new HlsManifestError();
+  segments.push(attributes.slice(start));
+  return Object.freeze(segments);
+}
+
+function parsedUriAttributes(line: string): readonly string[] {
+  const values: string[] = [];
+  for (const segment of attributeSegments(line)) {
+    const trimmed = segment.trim();
+    const separator = trimmed.indexOf('=');
+    if (separator < 1) continue;
+    const name = trimmed.slice(0, separator).trim();
+    if (name.toUpperCase() !== 'URI') continue;
+    const match = /^URI="([^"\r\n]*)"$/u.exec(trimmed);
+    if (!match) throw new HlsManifestError();
+    values.push(match[1] ?? '');
+  }
+  return Object.freeze(values);
+}
+
+function rewriteUriAttribute(
   line: string,
+  rawUri: string,
   manifestUri: URL,
   resource: HlsNestedResourceKind,
   makeLocator: HlsLocatorFactory,
-): Readonly<{ line: string; count: number }> {
-  let count = 0;
-  const rewritten = line.replace(/(^|[,:])URI="([^"\r\n]*)"/gu, (_match, prefix: string, uri: string) => {
-    count += 1;
-    return `${prefix}URI="${makeLocator(resolveMediaUri(uri, manifestUri), resource)}"`;
-  });
-  return Object.freeze({ line: rewritten, count });
+): string {
+  return line.replace(
+    `URI="${rawUri}"`,
+    `URI="${makeLocator(resolveMediaUri(rawUri, manifestUri), resource)}"`,
+  );
 }
 
 function assertNoUpstreamUri(text: string): void {
@@ -106,8 +140,9 @@ export function rewriteHlsManifest(
       continue;
     }
 
+    const uriAttributes = parsedUriAttributes(trimmed);
     if (trimmed.startsWith('#EXT-X-STREAM-INF:')) {
-      if (/[,:]URI="/u.test(trimmed)) throw new HlsManifestError();
+      if (uriAttributes.length !== 0) throw new HlsManifestError();
       output.push(trimmed);
       nextUriIsManifest = true;
       continue;
@@ -115,19 +150,18 @@ export function rewriteHlsManifest(
 
     const configuration = URI_TAGS.get(tagName(trimmed));
     if (configuration) {
-      const rewritten = rewriteUriAttributes(
-        trimmed,
-        manifestUri,
-        configuration.resource,
-        makeLocator,
+      if (configuration.required && uriAttributes.length !== 1) throw new HlsManifestError();
+      if (uriAttributes.length > 1) throw new HlsManifestError();
+      const uri = uriAttributes[0];
+      output.push(
+        uri === undefined
+          ? trimmed
+          : rewriteUriAttribute(trimmed, uri, manifestUri, configuration.resource, makeLocator),
       );
-      if (configuration.required && rewritten.count !== 1) throw new HlsManifestError();
-      if (rewritten.count > 1) throw new HlsManifestError();
-      output.push(rewritten.line);
       continue;
     }
 
-    if (/[,:]URI="/u.test(trimmed)) throw new HlsManifestError();
+    if (uriAttributes.length !== 0) throw new HlsManifestError();
     output.push(trimmed);
   }
 

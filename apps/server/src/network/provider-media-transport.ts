@@ -5,6 +5,13 @@ import type { RequestOptions as HttpsRequestOptions } from 'node:https';
 import { isIP } from 'node:net';
 import { Transform, type Readable } from 'node:stream';
 import {
+  ByteRangeError,
+  ByteRangeResponseError,
+  parseSingleByteRange,
+  validateSatisfiedRangeResponse,
+  validateUnsatisfiedRangeResponse,
+} from '../media/range.js';
+import {
   approveProviderRequestUrl,
   type ApprovedProviderRequestDestination,
   type ProviderDnsResolver,
@@ -78,6 +85,27 @@ export function filterProviderMediaResponseHeaders(headers: IncomingHttpHeaders)
     contentRange: cleanHeader(headers['content-range'], 128),
     acceptRanges: headers['accept-ranges'] === 'bytes' ? 'bytes' : null,
   });
+}
+
+export function validateProviderMediaRangeResponse(
+  requestRange: string | null,
+  status: number,
+  headers: ProviderMediaHeaders,
+): void {
+  if (status !== 206 && status !== 416) return;
+  try {
+    const parsedRange = parseSingleByteRange(requestRange ?? undefined);
+    if (status === 206) {
+      validateSatisfiedRangeResponse(parsedRange, headers.contentRange, headers.contentLength);
+    } else {
+      validateUnsatisfiedRangeResponse(parsedRange, headers.contentRange);
+    }
+  } catch (error) {
+    if (error instanceof ByteRangeError || error instanceof ByteRangeResponseError) {
+      throw new ProviderMediaTransportError('upstream_protocol_error');
+    }
+    throw error;
+  }
 }
 
 function requestOptions(
@@ -165,6 +193,17 @@ export class NodeProviderMediaTransport implements ProviderMediaTransport {
           return;
         }
 
+        const responseHeaders = filterProviderMediaResponseHeaders(incoming.headers);
+        try {
+          validateProviderMediaRangeResponse(request.range, incoming.statusCode ?? 0, responseHeaders);
+        } catch (error) {
+          incoming.resume();
+          settled = true;
+          reject(error);
+          safeDestroy(outgoing, 'upstream_protocol_error');
+          return;
+        }
+
         incoming.once('close', cleanup);
         incoming.setTimeout(providerMediaLimits.readTimeoutMs, () => {
           safeDestroy(outgoing, 'timeout');
@@ -180,7 +219,7 @@ export class NodeProviderMediaTransport implements ProviderMediaTransport {
           settled = true;
           resolve(Object.freeze({
             status: incoming.statusCode ?? 0,
-            headers: filterProviderMediaResponseHeaders(incoming.headers),
+            headers: responseHeaders,
             body: null,
             abort,
           }));
@@ -201,7 +240,7 @@ export class NodeProviderMediaTransport implements ProviderMediaTransport {
         settled = true;
         resolve(Object.freeze({
           status: incoming.statusCode ?? 0,
-          headers: filterProviderMediaResponseHeaders(incoming.headers),
+          headers: responseHeaders,
           body: limiter,
           abort,
         }));
