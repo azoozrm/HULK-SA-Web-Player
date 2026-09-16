@@ -204,7 +204,7 @@ const remux = await readUtf8(resolve(root, 'apps/server/src/media/remux.ts'));
 for (const term of [
   'spawn(',
   'shell: false',
-  "'protocol_whitelist'",
+  "'-protocol_whitelist'",
   "'pipe:0'",
   "'pipe:1'",
   'MAXIMUM_PROBE_INPUT_BYTES',
