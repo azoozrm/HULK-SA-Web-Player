@@ -43,18 +43,26 @@ test('Phase 5A browser-owned URLs remain base-path safe', () => {
   assert.throws(() => resolveAppPath('/player/', '/api/session'));
 });
 
-test('Phase 5A static entry assets use a fresh versioned URL while all static responses revalidate', async () => {
+test('Phase 5A static entry assets use one fresh revision for CSS, modules and font-relative delivery', async () => {
   const revision = 'abcdefghijklmnop';
   const template = await readFile(new URL('../apps/web/index.html', import.meta.url), 'utf8');
   const mounted = renderAppBasePathTemplate(template, '/player');
   const rendered = renderVersionedStaticAssetUrls(mounted, '/player', revision);
   assert.match(rendered, /href="\/player\/_static\/abcdefghijklmnop\/styles\.css"/u);
+  assert.match(rendered, /href="\/player\/_static\/abcdefghijklmnop\/login-polish\.css"/u);
   assert.match(rendered, /src="\/player\/_static\/abcdefghijklmnop\/src\/main\.js"/u);
   assert.doesNotMatch(rendered, /href="\/player\/styles\.css"/u);
+  assert.doesNotMatch(rendered, /href="\/player\/login-polish\.css"/u);
   assert.doesNotMatch(rendered, /src="\/player\/src\/main\.js"/u);
   assert.equal(
     resolveVersionedStaticAssetPath('/_static/abcdefghijklmnop/src/ui-model.js'),
     '/src/ui-model.js',
+  );
+  assert.equal(
+    resolveVersionedStaticAssetPath(
+      '/_static/abcdefghijklmnop/assets/fonts/IBMPlexSansArabic-Regular.woff2',
+    ),
+    '/assets/fonts/IBMPlexSansArabic-Regular.woff2',
   );
   assert.equal(resolveVersionedStaticAssetPath('/styles.css'), '/styles.css');
   assert.throws(() => renderVersionedStaticAssetUrls(mounted, '/player', 'bad'));
@@ -91,11 +99,15 @@ test('Phase 5A browser source does not add Provider credential persistence or cl
   assert.match(combined, /credentials:\s*'same-origin'/u);
   assert.match(combined, /password\.type = showPassword \? 'text' : 'password'/u);
   assert.match(combined, /if \(submitting\) return;/u);
-  assert.match(combined, /aria-pressed/u);
+  assert.match(combined, /input\.type = 'checkbox'/u);
+  assert.match(combined, /\.input\.checked/u);
 });
 
 test('Phase 5A visual source carries HULK tokens, safe areas, focus and reduced-motion behavior', async () => {
-  const styles = await readFile(new URL('../apps/web/styles.css', import.meta.url), 'utf8');
+  const [styles, polish] = await Promise.all([
+    readFile(new URL('../apps/web/styles.css', import.meta.url), 'utf8'),
+    readFile(new URL('../apps/web/login-polish.css', import.meta.url), 'utf8'),
+  ]);
   for (const token of [
     '#e6c352',
     '#fff0a8',
@@ -114,6 +126,8 @@ test('Phase 5A visual source carries HULK tokens, safe areas, focus and reduced-
   assert.match(styles, /prefers-reduced-motion:\s*reduce/u);
   assert.match(styles, /data-composition="split"/u);
   assert.match(styles, /@media \(min-width:\s*56rem\)/u);
+  assert.match(polish, /@font-face/u);
+  assert.match(polish, /linear-gradient\(135deg, #e8c95e 0%, #c89c32 52%, #9b7221 100%\)/u);
 });
 
 test('Phase 5A login and shell keep keyboard, D-pad and viewport resize navigation explicit', async () => {
@@ -133,7 +147,7 @@ test('Phase 5A login and shell keep keyboard, D-pad and viewport resize navigati
   assert.match(uiModelSource, /window\.visualViewport\.height/u);
 });
 
-test('Phase 5A brand assets are local SVGs copied and served by the Web runtime', async () => {
+test('Phase 5A brand and IBM Plex assets are copied and served by the Web runtime', async () => {
   const [badge, lockup, copyStatic, appHandler] = await Promise.all([
     readFile(new URL('../apps/web/assets/hulk-sa-badge.svg', import.meta.url), 'utf8'),
     readFile(new URL('../apps/web/assets/hulk-sa-lockup.svg', import.meta.url), 'utf8'),
@@ -148,6 +162,11 @@ test('Phase 5A brand assets are local SVGs copied and served by the Web runtime'
     assert.match(copyStatic, new RegExp(name.replace('.', '\\.'), 'u'));
     assert.match(appHandler, new RegExp(name.replace('.', '\\.'), 'u'));
   }
+  for (const name of ['IBMPlexSansArabic-Regular.woff2', 'IBMPlexSansArabic-Bold.woff2']) {
+    assert.match(copyStatic, new RegExp(name.replace('.', '\\.'), 'u'));
+    assert.match(appHandler, new RegExp(name.replace('.', '\\.'), 'u'));
+  }
   assert.match(appHandler, /image\/svg\+xml; charset=utf-8/u);
+  assert.match(appHandler, /font\/woff2/u);
   assert.match(appHandler, /\/src\/ui-model\.js/u);
 });

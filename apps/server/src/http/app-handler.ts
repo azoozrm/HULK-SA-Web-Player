@@ -24,6 +24,10 @@ const staticFiles = new Map<string, Readonly<{ relativePath: string; contentType
   ['/', { relativePath: 'index.html', contentType: 'text/html; charset=utf-8' }],
   ['/index.html', { relativePath: 'index.html', contentType: 'text/html; charset=utf-8' }],
   ['/styles.css', { relativePath: 'styles.css', contentType: 'text/css; charset=utf-8' }],
+  [
+    '/login-polish.css',
+    { relativePath: 'login-polish.css', contentType: 'text/css; charset=utf-8' },
+  ],
   ['/src/main.js', { relativePath: 'src/main.js', contentType: 'text/javascript; charset=utf-8' }],
   [
     '/src/session-client.js',
@@ -41,6 +45,14 @@ const staticFiles = new Map<string, Readonly<{ relativePath: string; contentType
     '/assets/hulk-sa-lockup.svg',
     { relativePath: 'assets/hulk-sa-lockup.svg', contentType: 'image/svg+xml; charset=utf-8' },
   ],
+  [
+    '/assets/fonts/IBMPlexSansArabic-Regular.woff2',
+    { relativePath: 'assets/fonts/IBMPlexSansArabic-Regular.woff2', contentType: 'font/woff2' },
+  ],
+  [
+    '/assets/fonts/IBMPlexSansArabic-Bold.woff2',
+    { relativePath: 'assets/fonts/IBMPlexSansArabic-Bold.woff2', contentType: 'font/woff2' },
+  ],
 ]);
 
 export type AppHandlerDependencies = SessionApiDependencies & Readonly<{
@@ -55,7 +67,7 @@ function staticSecurityHeaders(response: ServerResponse): void {
   response.setHeader('Cache-Control', 'no-cache');
   response.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+    "default-src 'self'; connect-src 'self'; img-src 'self'; font-src 'self'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
   );
 }
 

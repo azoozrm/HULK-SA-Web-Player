@@ -16,9 +16,9 @@ const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 const LOGIN_COPY = Object.freeze({
   title: 'اهلا بك',
-  description: 'ادخل بيانات اشتراكك للمتابعة',
+  description: 'ادخل بيانات اشتراكك للمتابعه',
   rememberAccount: 'تذكر الحساب',
-  showPassword: 'اظهار كلمة المرور',
+  showPassword: 'اظهار كلمه المرور',
   submit: 'دخول الى HULK',
   submitting: 'جاري الدخول...',
   checking: 'جاري التحقق من بيانات الاشتراك...',
@@ -39,9 +39,8 @@ type IconName =
 
 const ICON_PATHS: Readonly<Record<IconName, readonly string[]>> = Object.freeze({
   portal: Object.freeze([
-    'M9.5 14.5 14.5 9.5',
-    'M7.2 16.8 5.8 18.2a3.5 3.5 0 0 1-5-5l4-4a3.5 3.5 0 0 1 5 0',
-    'M16.8 7.2 18.2 5.8a3.5 3.5 0 0 1 5 5l-4 4a3.5 3.5 0 0 1-5 0',
+    'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71',
+    'M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71',
   ]),
   user: Object.freeze([
     'M12 12a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Z',
@@ -96,6 +95,11 @@ type ViewState =
       error: string | null;
     }>;
 
+type LoginOption = Readonly<{
+  control: HTMLLabelElement;
+  input: HTMLInputElement;
+}>;
+
 let viewState: ViewState = Object.freeze({ kind: 'loading' });
 let activeDestination: ShellDestinationId = 'home';
 let activeLoginStage: HTMLElement | null = null;
@@ -124,6 +128,23 @@ function createIcon(name: IconName): SVGSVGElement {
   return icon;
 }
 
+function createCheckmarkIcon(): SVGSVGElement {
+  const icon = document.createElementNS(SVG_NAMESPACE, 'svg');
+  icon.classList.add('login-option-check');
+  icon.setAttribute('viewBox', '0 0 16 16');
+  icon.setAttribute('fill', 'none');
+  icon.setAttribute('stroke', 'currentColor');
+  icon.setAttribute('stroke-width', '2');
+  icon.setAttribute('stroke-linecap', 'round');
+  icon.setAttribute('stroke-linejoin', 'round');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.setAttribute('focusable', 'false');
+  const path = document.createElementNS(SVG_NAMESPACE, 'path');
+  path.setAttribute('d', 'M3.5 8.25 6.55 11.3 12.5 4.75');
+  icon.append(path);
+  return icon;
+}
+
 function createBrandImage(variant: 'badge' | 'lockup', className: string): HTMLImageElement {
   const image = document.createElement('img');
   image.className = className;
@@ -143,22 +164,29 @@ function createButton(label: string, className: string, type: 'button' | 'submit
   return element;
 }
 
-function createLoginOption(label: string): HTMLButtonElement {
-  const option = document.createElement('button');
-  option.type = 'button';
-  option.className = 'login-option-toggle';
-  option.setAttribute('aria-pressed', 'false');
-  option.setAttribute('data-login-focus', 'true');
-  option.setAttribute('data-login-option', 'true');
+function createLoginOption(id: string, label: string): LoginOption {
+  const control = document.createElement('label');
+  control.className = 'login-option-toggle';
+  control.htmlFor = id;
+
+  const input = document.createElement('input');
+  input.id = id;
+  input.type = 'checkbox';
+  input.className = 'login-option-input';
+  input.setAttribute('data-login-focus', 'true');
+  input.setAttribute('data-login-option', 'true');
 
   const indicator = document.createElement('span');
   indicator.className = 'login-option-indicator';
   indicator.setAttribute('aria-hidden', 'true');
+  indicator.append(createCheckmarkIcon());
+
   const text = document.createElement('span');
   text.className = 'login-option-label';
   text.textContent = label;
-  option.append(indicator, text);
-  return option;
+
+  control.append(input, indicator, text);
+  return Object.freeze({ control, input });
 }
 
 function syncLoginComposition(): void {
@@ -325,29 +353,27 @@ function renderSignedOut(error: string | null): void {
   password.maxLength = 512;
   password.autocomplete = 'off';
   password.dir = 'auto';
-  password.placeholder = 'كلمة المرور';
+  password.placeholder = 'كلمه المرور';
   password.setAttribute('data-login-focus', 'true');
 
   let rememberAccount = false;
-  const remember = createLoginOption(LOGIN_COPY.rememberAccount);
-  remember.addEventListener('click', () => {
-    rememberAccount = !rememberAccount;
-    remember.setAttribute('aria-pressed', String(rememberAccount));
+  const remember = createLoginOption('remember-account', LOGIN_COPY.rememberAccount);
+  remember.input.addEventListener('change', () => {
+    rememberAccount = remember.input.checked;
   });
 
   let showPassword = false;
-  const visibility = createLoginOption(LOGIN_COPY.showPassword);
-  visibility.setAttribute('aria-controls', password.id);
-  visibility.addEventListener('click', () => {
-    showPassword = !showPassword;
+  const visibility = createLoginOption('show-password', LOGIN_COPY.showPassword);
+  visibility.input.setAttribute('aria-controls', password.id);
+  visibility.input.addEventListener('change', () => {
+    showPassword = visibility.input.checked;
     password.type = showPassword ? 'text' : 'password';
-    visibility.setAttribute('aria-pressed', String(showPassword));
   });
 
   const options = document.createElement('div');
   options.className = 'login-options';
   options.setAttribute('aria-label', 'خيارات تسجيل الدخول');
-  options.append(remember, visibility);
+  options.append(remember.control, visibility.control);
 
   const submit = createButton(LOGIN_COPY.submit, 'primary-action', 'submit');
   submit.setAttribute('data-login-focus', 'true');
@@ -362,9 +388,9 @@ function renderSignedOut(error: string | null): void {
   }
 
   form.append(
-    createField('رابط المزود / البوابة', host, 'portal'),
+    createField('رابط المزود / البوابه', host, 'portal'),
     createField('اسم المستخدم', username, 'user'),
-    createField('كلمة المرور', password, 'lock'),
+    createField('كلمه المرور', password, 'lock'),
     options,
     submit,
     feedback,
@@ -377,8 +403,8 @@ function renderSignedOut(error: string | null): void {
     host.disabled = busy;
     username.disabled = busy;
     password.disabled = busy;
-    remember.disabled = busy;
-    visibility.disabled = busy;
+    remember.input.disabled = busy;
+    visibility.input.disabled = busy;
     submit.disabled = busy;
     submit.classList.toggle('is-loading', busy);
     submit.querySelector('span')!.textContent = busy ? LOGIN_COPY.submitting : LOGIN_COPY.submit;

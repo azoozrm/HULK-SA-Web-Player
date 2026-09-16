@@ -58,3 +58,48 @@ jobs:
         run: npm run build
       - name: Security contracts
         run: npm run security:contracts
+
+  qualification-package:
+    if: github.event_name == 'pull_request'
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Set up Node.js 24
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version-file: '.node-version'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Production build from exact PR head
+        run: npm run build
+      - name: Create rendered qualification overlay
+        env:
+          QUALIFICATION_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          zip_name="HULK-SA-Web-Player-Phase-5A-Rendered-Qualification-${QUALIFICATION_SHA}.zip"
+          rm -rf qualification
+          mkdir -p qualification
+          cp -R dist qualification/dist
+          (
+            cd qualification
+            zip -X -q -r "../${zip_name}" dist
+          )
+          sha256sum "${zip_name}" | tee "${zip_name}.sha256"
+      - name: Upload rendered qualification overlay
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: phase-5a-rendered-qualification-${{ github.event.pull_request.head.sha }}
+          path: |
+            HULK-SA-Web-Player-Phase-5A-Rendered-Qualification-${{ github.event.pull_request.head.sha }}.zip
+            HULK-SA-Web-Player-Phase-5A-Rendered-Qualification-${{ github.event.pull_request.head.sha }}.zip.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7

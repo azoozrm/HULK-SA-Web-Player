@@ -33,6 +33,7 @@ export function renderVersionedStaticAssetUrls(
   const staticBasePath = appExternalPath(basePath, `/_static/${revision}`);
   return source
     .replaceAll(`${basePath}/styles.css`, `${staticBasePath}/styles.css`)
+    .replaceAll(`${basePath}/login-polish.css`, `${staticBasePath}/login-polish.css`)
     .replaceAll(`${basePath}/src/main.js`, `${staticBasePath}/src/main.js`);
 }
 
